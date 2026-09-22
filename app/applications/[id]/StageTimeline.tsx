@@ -11,27 +11,39 @@ export default function StageTimeline({ applicationId, stages }: { applicationId
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    await fetch(`/api/applications/${applicationId}/stages`, {
+    const res = await fetch(`/api/applications/${applicationId}/stages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage_type: stageType, scheduled_at: new Date(scheduledAt).toISOString() }),
     });
+    if (!res.ok) {
+      alert('단계 추가에 실패했습니다. 다시 시도해주세요.');
+      return;
+    }
     setStageType('');
     setScheduledAt('');
     router.refresh();
   }
 
   async function handleStatusChange(id: string, status: string) {
-    await fetch(`/api/stages/${id}`, {
+    const res = await fetch(`/api/stages/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
+    if (!res.ok) {
+      alert('상태 변경에 실패했습니다. 다시 시도해주세요.');
+      return;
+    }
     router.refresh();
   }
 
   async function handleDelete(id: string) {
-    await fetch(`/api/stages/${id}`, { method: 'DELETE' });
+    const res = await fetch(`/api/stages/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      alert('삭제에 실패했습니다. 다시 시도해주세요.');
+      return;
+    }
     router.refresh();
   }
 
