@@ -11,7 +11,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  let response = NextResponse.next({ request });
+  // Cookie writes are batched and applied once, after getUser() finishes,
+  // so that refreshing more than one cookie in a single request (the
+  // normal case for access + refresh tokens) doesn't drop earlier writes
+  // by rebuilding `response` on every call.
+  const pendingCookies: { name: string; value: string; options: any }[] = [];
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,13 +27,11 @@ export async function middleware(request: NextRequest) {
         },
         set(name: string, value: string, options: any) {
           request.cookies.set(name, value);
-          response = NextResponse.next({ request });
-          response.cookies.set(name, value, options);
+          pendingCookies.push({ name, value, options });
         },
         remove(name: string, options: any) {
           request.cookies.set(name, '');
-          response = NextResponse.next({ request });
-          response.cookies.set(name, '', { ...options, maxAge: 0 });
+          pendingCookies.push({ name, value: '', options: { ...options, maxAge: 0 } });
         },
       },
     }
@@ -36,9 +39,12 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    const loginUrl = new URL('/login', request.url);
-    return NextResponse.redirect(loginUrl);
+  const response = user
+    ? NextResponse.next({ request })
+    : NextResponse.redirect(new URL('/login', request.url));
+
+  for (const cookie of pendingCookies) {
+    response.cookies.set(cookie.name, cookie.value, cookie.options);
   }
 
   return response;
