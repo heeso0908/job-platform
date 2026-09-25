@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { isSafePublicUrl, parseJobMeta } from './jobUrl';
+import { isSafePublicUrl, normalizeJobUrl, parseJobMeta } from './jobUrl';
+
+describe('normalizeJobUrl', () => {
+  it('rewrites jasoseol list-modal urls to the detail page', () => {
+    expect(normalizeJobUrl('https://jasoseol.com/recruit?ec=105986')).toBe('https://jasoseol.com/recruit/105986');
+    expect(normalizeJobUrl('https://jasoseol.com/recruit?foo=1&ec=105986#x')).toBe('https://jasoseol.com/recruit/105986');
+    expect(normalizeJobUrl('https://www.jasoseol.com/recruit?ec=42')).toBe('https://jasoseol.com/recruit/42');
+  });
+
+  it('leaves other urls untouched', () => {
+    expect(normalizeJobUrl('https://jasoseol.com/recruit/90000')).toBe('https://jasoseol.com/recruit/90000');
+    expect(normalizeJobUrl('https://example.com/job?ec=1')).toBe('https://example.com/job?ec=1');
+    expect(normalizeJobUrl('https://jasoseol.com/recruit?ec=abc')).toBe('https://jasoseol.com/recruit?ec=abc');
+  });
+});
 
 describe('isSafePublicUrl', () => {
   it('allows normal https urls', () => {
@@ -72,6 +86,14 @@ describe('parseJobMeta', () => {
         hiringOrganization: { name: '포항산업과학연구원(RIST)' },
       })}</script>`;
     expect(parseJobMeta(html)).toEqual({ company: '포항산업과학연구원(RIST)', position: '비서직' });
+  });
+
+  it('uses the posting title when the listing has many roles', () => {
+    const roles = Array.from({ length: 12 }, (_, i) => `[HD현대중공업] 직무${i}`).join(', ');
+    const html = `
+      <meta property="og:title" content="HD현대 채용공고 - 26년 하반기 신입사원 모집 | 자소서 문항" />
+      <meta property="og:description" content="확인해보세요! 모집 직무 : ${roles} - 자소설닷컴" />`;
+    expect(parseJobMeta(html)).toEqual({ company: 'HD현대', position: '26년 하반기 신입사원 모집' });
   });
 
   it('ignores generic listing titles', () => {

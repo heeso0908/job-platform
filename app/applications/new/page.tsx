@@ -22,8 +22,9 @@ export default function NewApplicationPage() {
         body: JSON.stringify({ url: url.trim() }),
       });
       if (!res.ok) throw new Error('parse failed');
-      const meta: { company: string; position: string } = await res.json();
+      const meta: { company: string; position: string; url?: string } = await res.json();
       if (!meta.company && !meta.position) throw new Error('nothing found');
+      if (meta.url) setApplyLink(meta.url);
       if (meta.company) setCompany(meta.company);
       if (meta.position) setPosition(meta.position);
       setImportState('done');
