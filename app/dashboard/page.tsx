@@ -32,25 +32,70 @@ export default async function DashboardPage() {
   }
   upcoming.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
 
+  const inProgress = applications.filter((a) => a.status === '진행중').length;
+
   return (
-    <main>
-      <h1>대시보드</h1>
-      <nav>
-        <Link href="/applications">지원 공고</Link> | <Link href="/settings">설정</Link>
-      </nav>
-      <h2>다가오는 일정</h2>
-      <ul>
+    <main className="space-y-6">
+      <section className="space-y-1 px-1 pt-4">
+        <h1 className="text-2xl font-extrabold leading-snug">
+          {upcoming.length > 0 ? (
+            <>
+              다가오는 일정이
+              <br />
+              {upcoming.length}개 있어요
+            </>
+          ) : (
+            <>
+              예정된 일정이
+              <br />
+              없어요
+            </>
+          )}
+        </h1>
+        <p className="text-sm text-ink-500">
+          전체 공고 {applications.length}개 · 진행 중 {inProgress}개
+        </p>
+      </section>
+
+      <section className="space-y-3">
         {upcoming.map((item) => {
           const days = daysUntil(new Date(item.scheduledAt));
           return (
-            <li key={`${item.applicationId}-${item.stageType}-${item.scheduledAt}`}>
-              <Link href={`/applications/${item.applicationId}`}>
-                D{days >= 0 ? `-${days}` : `+${-days}`} — {item.company} {item.stageType} ({new Date(item.scheduledAt).toLocaleString('ko-KR')})
-              </Link>
-            </li>
+            <Link
+              key={`${item.applicationId}-${item.stageType}-${item.scheduledAt}`}
+              href={`/applications/${item.applicationId}`}
+              className="card flex items-center gap-4 transition hover:shadow-md"
+            >
+              <span
+                className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-sm font-extrabold ${
+                  days <= 1 ? 'bg-brand-500 text-white' : 'bg-brand-50 text-brand-700'
+                }`}
+              >
+                {days === 0 ? 'D-DAY' : days > 0 ? `D-${days}` : `D+${-days}`}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-bold">
+                  {item.company} · {item.stageType}
+                </p>
+                <p className="truncate text-sm text-ink-500">{item.position}</p>
+              </div>
+              <p className="shrink-0 text-right text-sm text-ink-400">
+                {new Date(item.scheduledAt).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
+                <br />
+                {new Date(item.scheduledAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </Link>
           );
         })}
-      </ul>
+        {upcoming.length === 0 && (
+          <div className="card space-y-4 text-center">
+            <p className="text-ink-500">공고를 등록하고 전형 일정을 추가해보세요.</p>
+            <Link href="/applications/new" className="btn">
+              공고 등록하기
+            </Link>
+          </div>
+        )}
+      </section>
     </main>
   );
 }

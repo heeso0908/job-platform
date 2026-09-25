@@ -28,14 +28,22 @@ export default function NewApplicationPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>새 공고 등록</h1>
-      {error && <p role="alert">{error}</p>}
-      <input placeholder="회사명" value={company} onChange={(e) => setCompany(e.target.value)} required />
-      <input placeholder="직무" value={position} onChange={(e) => setPosition(e.target.value)} required />
-      <input placeholder="공고 링크" value={applyLink} onChange={(e) => setApplyLink(e.target.value)} />
-      <textarea placeholder="메모" value={memo} onChange={(e) => setMemo(e.target.value)} />
-      <button type="submit">등록</button>
-    </form>
+    <main className="pt-4">
+      <form onSubmit={handleSubmit} className="card space-y-4">
+        <h1 className="pb-2 text-2xl font-extrabold">새 공고 등록</h1>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
+        <input className="input" placeholder="회사명" value={company} onChange={(e) => setCompany(e.target.value)} required />
+        <input className="input" placeholder="직무" value={position} onChange={(e) => setPosition(e.target.value)} required />
+        <input className="input" placeholder="공고 링크 (선택)" value={applyLink} onChange={(e) => setApplyLink(e.target.value)} />
+        <textarea className="input min-h-28" placeholder="메모 (선택)" value={memo} onChange={(e) => setMemo(e.target.value)} />
+        <button type="submit" className="btn w-full">
+          등록하기
+        </button>
+      </form>
+    </main>
   );
 }
