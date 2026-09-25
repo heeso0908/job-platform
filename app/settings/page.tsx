@@ -34,15 +34,31 @@ export default function SettingsPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>설정</h1>
-      {error && <p role="alert">{error}</p>}
-      <label>
-        Slack Webhook URL
-        <input value={webhookUrl} onChange={(e) => setWebhookUrl(e.target.value)} placeholder="https://hooks.slack.com/services/..." />
-      </label>
-      <button type="submit">저장</button>
-      {saved && <p>저장되었습니다.</p>}
-    </form>
+    <main className="pt-4">
+      <form onSubmit={handleSubmit} className="card space-y-4">
+        <div className="space-y-1 pb-2">
+          <h1 className="text-2xl font-extrabold">설정</h1>
+          <p className="text-sm text-ink-500">전형 일정 알림을 Slack으로 받아요</p>
+        </div>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-ink-700">Slack Webhook URL</span>
+          <input
+            className="input"
+            value={webhookUrl}
+            onChange={(e) => setWebhookUrl(e.target.value)}
+            placeholder="https://hooks.slack.com/services/..."
+          />
+        </label>
+        <button type="submit" className="btn w-full">
+          저장
+        </button>
+        {saved && <p className="rounded-2xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700">저장되었어요.</p>}
+      </form>
+    </main>
   );
 }
