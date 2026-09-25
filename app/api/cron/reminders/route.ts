@@ -3,6 +3,7 @@ import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { findDueReminders } from '@/lib/reminders';
 import { getSlackWebhook } from '@/lib/db/slackWebhook';
 import { sendSlackMessage } from '@/lib/slack';
+import { formatKstDateTime } from '@/lib/date';
 
 export async function GET(request: NextRequest) {
   if (!process.env.CRON_SECRET) {
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
         webhookCache.set(reminder.userId, webhookUrl);
       }
       if (!webhookUrl) continue;
-      const scheduledDate = new Date(reminder.scheduledAt).toLocaleDateString('ko-KR');
+      const scheduledDate = formatKstDateTime(new Date(reminder.scheduledAt));
       await sendSlackMessage(
         webhookUrl,
         `[${reminder.company}] ${reminder.position} — ${reminder.stageType} 일정이 ${scheduledDate}입니다.`
