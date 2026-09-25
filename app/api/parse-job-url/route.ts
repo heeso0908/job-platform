@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { isSafePublicUrl, normalizeJobUrl, parseJobMeta, parseRoles } from '@/lib/jobUrl';
+import { isSafePublicUrl, normalizeJobUrl, parseJobMeta, parseRoles, parseDeadline } from '@/lib/jobUrl';
 
 const MAX_REDIRECTS = 3;
 const MAX_BYTES = 1_000_000;
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   try {
     const html = await fetchHtml(canonicalUrl);
     if (!html) return NextResponse.json({ error: '페이지를 불러오지 못했어요.' }, { status: 422 });
-    return NextResponse.json({ ...parseJobMeta(html), roles: parseRoles(html), url: canonicalUrl });
+    return NextResponse.json({ ...parseJobMeta(html), roles: parseRoles(html), deadline: parseDeadline(html), url: canonicalUrl });
   } catch {
     return NextResponse.json({ error: '페이지를 불러오지 못했어요.' }, { status: 422 });
   }

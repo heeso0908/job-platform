@@ -107,6 +107,19 @@ export function parseRoles(html: string): string[] {
   return Array.from(new Set(roles));
 }
 
+export function parseDeadline(html: string): string | null {
+  const raw = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)?.[1];
+  if (!raw) return null;
+  try {
+    const endTime = JSON.parse(raw)?.props?.pageProps?.initialEmploymentCompany?.end_time;
+    if (typeof endTime !== 'string') return null;
+    const date = new Date(endTime);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  } catch {
+    return null;
+  }
+}
+
 export function splitRole(role: string): { org: string; job: string } {
   const m = role.match(/^\[([^\]]+)\]\s*(.+)$/);
   return m ? { org: m[1].trim(), job: m[2].trim() } : { org: '', job: role.trim() };

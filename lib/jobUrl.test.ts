@@ -1,5 +1,28 @@
 import { describe, it, expect } from 'vitest';
-import { groupRoles, isSafePublicUrl, normalizeJobUrl, parseJobMeta, parseRoles } from './jobUrl';
+import { groupRoles, isSafePublicUrl, normalizeJobUrl, parseJobMeta, parseRoles, parseDeadline } from './jobUrl';
+
+describe('parseDeadline', () => {
+  const page = (company: unknown) =>
+    `<html><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
+      props: { pageProps: { initialEmploymentCompany: company } },
+    })}</script></html>`;
+
+  it('reads the application end time as an ISO string', () => {
+    const html = page({ start_time: '2026-09-01T17:00:00.000+09:00', end_time: '2026-09-27T23:59:00.000+09:00' });
+    expect(parseDeadline(html)).toBe('2026-09-27T14:59:00.000Z');
+  });
+
+  it('returns null when the end time is missing or invalid', () => {
+    expect(parseDeadline(page({ end_time: null }))).toBeNull();
+    expect(parseDeadline(page({ end_time: 'not a date' }))).toBeNull();
+    expect(parseDeadline(page(undefined))).toBeNull();
+  });
+
+  it('returns null for pages without __NEXT_DATA__ or with broken json', () => {
+    expect(parseDeadline('<html></html>')).toBeNull();
+    expect(parseDeadline('<script id="__NEXT_DATA__" type="application/json">{oops</script>')).toBeNull();
+  });
+});
 
 describe('parseRoles', () => {
   const page = (roles: string) =>

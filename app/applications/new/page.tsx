@@ -4,7 +4,14 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import RolePicker from './RolePicker';
 
+function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function NewApplicationPage() {
+  const [deadline, setDeadline] = useState('');
   const [company, setCompany] = useState('');
   const [position, setPosition] = useState('');
   const [applyLink, setApplyLink] = useState('');
@@ -25,8 +32,9 @@ export default function NewApplicationPage() {
         body: JSON.stringify({ url: url.trim() }),
       });
       if (!res.ok) throw new Error('parse failed');
-      const meta: { company: string; position: string; roles?: string[]; url?: string } = await res.json();
+      const meta: { company: string; position: string; roles?: string[]; deadline?: string | null; url?: string } = await res.json();
       if (!meta.company && !meta.position) throw new Error('nothing found');
+      setDeadline(meta.deadline ? toLocalInput(meta.deadline) : '');
       setRoles(meta.roles ?? []);
       setSelectedRole(null);
       if (meta.url) setApplyLink(meta.url);
@@ -51,6 +59,19 @@ export default function NewApplicationPage() {
       return;
     }
     const app = await res.json();
+
+    if (deadline) {
+      const scheduledAt = new Date(deadline);
+      await fetch(`/api/applications/${app.id}/stages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stage_type: '서류 마감',
+          scheduled_at: scheduledAt.toISOString(),
+          status: scheduledAt.getTime() < Date.now() ? '완료' : '예정',
+        }),
+      }).catch(() => {});
+    }
     router.push(`/applications/${app.id}`);
   }
 
@@ -102,6 +123,15 @@ export default function NewApplicationPage() {
 
         <input className="input" placeholder="회사명" value={company} onChange={(e) => setCompany(e.target.value)} required />
         <input className="input" placeholder="직무" value={position} onChange={(e) => setPosition(e.target.value)} required />
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold text-ink-700">
+            서류 마감 {importState === 'done' && deadline ? '(공고에서 가져왔어요)' : '(선택)'}
+          </span>
+          <input className="input" type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+          <span className="block px-1 text-xs text-ink-400">
+            인적성·면접 같은 이후 전형은 등록 후 공고 상세에서 직접 추가해요.
+          </span>
+        </label>
         <textarea className="input min-h-28" placeholder="메모 (선택)" value={memo} onChange={(e) => setMemo(e.target.value)} />
         <button type="submit" className="btn w-full">
           등록하기
