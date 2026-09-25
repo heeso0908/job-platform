@@ -18,7 +18,7 @@ export default function NewApplicationPage() {
   const [memo, setMemo] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<number | null>(null);
   const [importState, setImportState] = useState<'idle' | 'loading' | 'done' | 'failed'>('idle');
   const router = useRouter();
 
@@ -112,10 +112,10 @@ export default function NewApplicationPage() {
         {roles.length > 1 && (
           <RolePicker
             roles={roles}
-            selected={selectedRole}
-            onSelect={(role) => {
-              setSelectedRole(role);
-              setPosition(role);
+            selectedIndex={selectedRole}
+            onSelect={(index) => {
+              setSelectedRole(index);
+              setPosition(roles[index]);
             }}
           />
         )}

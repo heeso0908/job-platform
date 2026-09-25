@@ -4,17 +4,19 @@ import { useState } from 'react';
 
 export default function RolePicker({
   roles,
-  selected,
+  selectedIndex,
   onSelect,
 }: {
   roles: string[];
-  selected: string | null;
-  onSelect: (role: string) => void;
+  selectedIndex: number | null;
+  onSelect: (index: number) => void;
 }) {
   const [query, setQuery] = useState('');
 
   const q = query.trim().toLowerCase();
-  const visible = q ? roles.filter((r) => r.toLowerCase().includes(q)) : roles;
+  const visible = roles
+    .map((role, index) => ({ role, index }))
+    .filter(({ role }) => !q || role.toLowerCase().includes(q));
 
   return (
     <div className="space-y-3 rounded-2xl bg-brand-50 p-4">
@@ -29,13 +31,13 @@ export default function RolePicker({
         onChange={(e) => setQuery(e.target.value)}
       />
       <ul className="max-h-72 space-y-1 overflow-y-auto pr-1">
-        {visible.map((role) => {
-          const active = selected === role;
+        {visible.map(({ role, index }) => {
+          const active = selectedIndex === index;
           return (
-            <li key={role}>
+            <li key={index}>
               <button
                 type="button"
-                onClick={() => onSelect(role)}
+                onClick={() => onSelect(index)}
                 className={`w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition ${
                   active ? 'bg-brand-500 text-white' : 'bg-white text-ink-700 hover:bg-brand-100'
                 }`}
