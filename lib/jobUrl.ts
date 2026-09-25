@@ -91,8 +91,8 @@ function fromJsonLd(html: string): JobMeta | null {
   return null;
 }
 
-function uniqueTrimmed(values: string[]): string[] {
-  return Array.from(new Set(values.map((v) => v.trim()).filter(Boolean)));
+function trimmedNonEmpty(values: string[]): string[] {
+  return values.map((v) => v.trim()).filter(Boolean);
 }
 
 export function parseRoles(html: string): string[] {
@@ -101,12 +101,12 @@ export function parseRoles(html: string): string[] {
     const fields = employments
       .map((e) => (typeof e?.field === 'string' ? decodeEntities(e.field) : ''))
       .filter(Boolean);
-    if (fields.length > 0) return uniqueTrimmed(fields);
+    if (fields.length > 0) return trimmedNonEmpty(fields);
   }
 
   const description = metaContent(html, 'og:description') || metaContent(html, 'description');
   const list = description.match(/모집\s*직무\s*[:：]\s*(.+?)\s*(?:-\s*자소설닷컴)?$/)?.[1];
-  return list ? uniqueTrimmed(list.split(/,\s*(?![^()]*\))/)) : [];
+  return list ? trimmedNonEmpty(list.split(/,\s*(?![^()]*\))/)) : [];
 }
 
 function readEmploymentCompany(html: string): Record<string, any> | null {

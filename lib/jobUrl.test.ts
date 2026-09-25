@@ -41,9 +41,9 @@ describe('parseRoles', () => {
     expect(parseRoles(html)).toEqual(['[HD한국조선해양] 구매', '소프트웨어 개발 (삼성전자)', '영업관리']);
   });
 
-  it('removes only identical duplicates', () => {
-    const html = nextData([{ field: '설계' }, { field: '설계 ' }, { field: '설계(전기)' }]);
-    expect(parseRoles(html)).toEqual(['설계', '설계(전기)']);
+  it('keeps every job table entry, including ones with identical text', () => {
+    const html = nextData([{ id: 1, field: '설계' }, { id: 2, field: '설계 ' }, { id: 3, field: '설계(전기)' }]);
+    expect(parseRoles(html)).toEqual(['설계', '설계', '설계(전기)']);
   });
 
   it('skips entries without a usable field', () => {
@@ -52,7 +52,7 @@ describe('parseRoles', () => {
   });
 
   it('falls back to the 모집 직무 description when the page data has no roles', () => {
-    expect(parseRoles(description('개발, 기획, 개발'))).toEqual(['개발', '기획']);
+    expect(parseRoles(description('개발, 기획, 개발'))).toEqual(['개발', '기획', '개발']);
   });
 
   it('does not split description roles on commas inside parentheses', () => {
