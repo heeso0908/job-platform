@@ -91,14 +91,34 @@ function fromJsonLd(html: string): JobMeta | null {
   return null;
 }
 
+export function normalizeJobUrl(raw: string): string {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return raw;
+  }
+  const host = url.hostname.replace(/^www\./, '');
+  const ec = url.searchParams.get('ec');
+  if (host === 'jasoseol.com' && url.pathname.replace(/\/$/, '') === '/recruit' && ec && /^\d+$/.test(ec)) {
+    return `https://jasoseol.com/recruit/${ec}`;
+  }
+  return raw;
+}
+
 const GENERIC_TITLES = new Set(['채용 공고', '채용공고', '채용', '공고']);
+const MAX_ROLES = 3;
+const MAX_ROLE_LENGTH = 60;
 
 export function parseJobMeta(html: string): JobMeta {
   const ogTitle = metaContent(html, 'og:title') || decodeEntities(html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1] ?? '');
   const ogDescription = metaContent(html, 'og:description') || metaContent(html, 'description');
   const titleHead = ogTitle.split(/\s[|｜]\s/)[0].trim();
 
-  const conciseRole = ogDescription.match(/모집\s*직무\s*[:：]\s*(.+?)\s*(?:-\s*자소설닷컴)?$/)?.[1]?.trim();
+  const postingTitle = titleHead.match(/채용\s*공고\s*[-–]\s*(.+)$/)?.[1]?.trim();
+  const roles = ogDescription.match(/모집\s*직무\s*[:：]\s*(.+?)\s*(?:-\s*자소설닷컴)?$/)?.[1]?.trim();
+  const isBroadListing = roles !== undefined && (roles.split(',').length > MAX_ROLES || roles.length > MAX_ROLE_LENGTH);
+  const conciseRole = isBroadListing ? postingTitle : roles;
 
   const jsonLd = fromJsonLd(html);
   if (jsonLd) return { company: jsonLd.company, position: conciseRole ?? jsonLd.position };
