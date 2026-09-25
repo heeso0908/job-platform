@@ -1,0 +1,85 @@
+import { describe, it, expect } from 'vitest';
+import { isSafePublicUrl, parseJobMeta } from './jobUrl';
+
+describe('isSafePublicUrl', () => {
+  it('allows normal https urls', () => {
+    expect(isSafePublicUrl('https://jasoseol.com/recruit/90000')).toBe(true);
+  });
+
+  it('rejects non-http protocols', () => {
+    expect(isSafePublicUrl('file:///etc/passwd')).toBe(false);
+    expect(isSafePublicUrl('ftp://example.com')).toBe(false);
+  });
+
+  it('rejects localhost and private/link-local addresses', () => {
+    expect(isSafePublicUrl('http://localhost:3000')).toBe(false);
+    expect(isSafePublicUrl('http://127.0.0.1')).toBe(false);
+    expect(isSafePublicUrl('http://10.0.0.5')).toBe(false);
+    expect(isSafePublicUrl('http://192.168.1.1')).toBe(false);
+    expect(isSafePublicUrl('http://172.16.0.1')).toBe(false);
+    expect(isSafePublicUrl('http://169.254.169.254/latest/meta-data')).toBe(false);
+    expect(isSafePublicUrl('http://[::1]/')).toBe(false);
+  });
+
+  it('rejects malformed urls', () => {
+    expect(isSafePublicUrl('not a url')).toBe(false);
+  });
+});
+
+describe('parseJobMeta', () => {
+  it('parses a jasoseol recruit page', () => {
+    const html = `<html><head>
+      <title>포항산업과학연구원(RIST) 채용공고 - 23 하반기 연봉계약직 수시채용 (비서직) | 자소서 문항</title>
+      <meta property="og:title" content="포항산업과학연구원(RIST) 채용공고 - 23 하반기 연봉계약직 수시채용 (비서직) | 자소서 문항, 지원자 스펙 분석까지" />
+      <meta property="og:description" content="자기소개서 문항. 포항산업과학연구원(RIST) 계약직 채용공고를 확인해보세요! 모집 직무 : 비서직 - 자소설닷컴" />
+    </head></html>`;
+    expect(parseJobMeta(html)).toEqual({ company: '포항산업과학연구원(RIST)', position: '비서직' });
+  });
+
+  it('prefers JSON-LD JobPosting when present', () => {
+    const html = `<script type="application/ld+json">${JSON.stringify({
+      '@type': 'JobPosting',
+      title: '백엔드 개발자',
+      hiringOrganization: { '@type': 'Organization', name: '토스' },
+    })}</script>`;
+    expect(parseJobMeta(html)).toEqual({ company: '토스', position: '백엔드 개발자' });
+  });
+
+  it('finds JobPosting inside a JSON-LD array', () => {
+    const html = `<script type="application/ld+json">${JSON.stringify([
+      { '@type': 'WebSite' },
+      { '@type': 'JobPosting', title: '디자이너', hiringOrganization: { name: '카카오' } },
+    ])}</script>`;
+    expect(parseJobMeta(html)).toEqual({ company: '카카오', position: '디자이너' });
+  });
+
+  it('falls back to a cleaned og:title as position when nothing else matches', () => {
+    const html = `<meta property="og:title" content="프론트엔드 개발자 채용 | 어떤사이트" />`;
+    expect(parseJobMeta(html)).toEqual({ company: '', position: '프론트엔드 개발자 채용' });
+  });
+
+  it('decodes html entities', () => {
+    const html = `<meta property="og:title" content="A&amp;B 채용공고 - 신입 | 사이트" />`;
+    expect(parseJobMeta(html).company).toBe('A&B');
+  });
+
+  it('uses JSON-LD for company but prefers the concise 모집 직무 for position', () => {
+    const html = `
+      <meta property="og:description" content="확인해보세요! 모집 직무 : 비서직 - 자소설닷컴" />
+      <script type="application/ld+json">${JSON.stringify({
+        '@type': 'JobPosting',
+        title: '[포항산업과학연구원(RIST)] 23 하반기 연봉계약직 수시채용 (비서직)',
+        hiringOrganization: { name: '포항산업과학연구원(RIST)' },
+      })}</script>`;
+    expect(parseJobMeta(html)).toEqual({ company: '포항산업과학연구원(RIST)', position: '비서직' });
+  });
+
+  it('ignores generic listing titles', () => {
+    const html = `<meta property="og:title" content="채용 공고" />`;
+    expect(parseJobMeta(html)).toEqual({ company: '', position: '' });
+  });
+
+  it('returns empty strings when nothing is found', () => {
+    expect(parseJobMeta('<html></html>')).toEqual({ company: '', position: '' });
+  });
+});

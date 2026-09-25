@@ -9,7 +9,28 @@ export default function NewApplicationPage() {
   const [applyLink, setApplyLink] = useState('');
   const [memo, setMemo] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [importState, setImportState] = useState<'idle' | 'loading' | 'done' | 'failed'>('idle');
   const router = useRouter();
+
+  async function importFromUrl(url: string) {
+    if (!/^https?:\/\//i.test(url.trim())) return;
+    setImportState('loading');
+    try {
+      const res = await fetch('/api/parse-job-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url.trim() }),
+      });
+      if (!res.ok) throw new Error('parse failed');
+      const meta: { company: string; position: string } = await res.json();
+      if (!meta.company && !meta.position) throw new Error('nothing found');
+      if (meta.company) setCompany(meta.company);
+      if (meta.position) setPosition(meta.position);
+      setImportState('done');
+    } catch {
+      setImportState('failed');
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,9 +57,31 @@ export default function NewApplicationPage() {
             {error}
           </p>
         )}
+
+        <div className="space-y-2">
+          <input
+            className="input"
+            placeholder="공고 링크를 붙여넣으면 자동으로 채워져요"
+            value={applyLink}
+            onChange={(e) => {
+              setApplyLink(e.target.value);
+              setImportState('idle');
+            }}
+            onPaste={(e) => {
+              const pasted = e.clipboardData.getData('text');
+              if (pasted) void importFromUrl(pasted);
+            }}
+            onBlur={() => {
+              if (importState === 'idle') void importFromUrl(applyLink);
+            }}
+          />
+          {importState === 'loading' && <p className="px-1 text-sm text-ink-500">공고 정보를 불러오는 중이에요...</p>}
+          {importState === 'done' && <p className="px-1 text-sm font-semibold text-brand-700">회사와 직무를 불러왔어요. 확인 후 수정할 수 있어요.</p>}
+          {importState === 'failed' && <p className="px-1 text-sm text-ink-500">자동으로 읽지 못했어요. 직접 입력해주세요.</p>}
+        </div>
+
         <input className="input" placeholder="회사명" value={company} onChange={(e) => setCompany(e.target.value)} required />
         <input className="input" placeholder="직무" value={position} onChange={(e) => setPosition(e.target.value)} required />
-        <input className="input" placeholder="공고 링크 (선택)" value={applyLink} onChange={(e) => setApplyLink(e.target.value)} />
         <textarea className="input min-h-28" placeholder="메모 (선택)" value={memo} onChange={(e) => setMemo(e.target.value)} />
         <button type="submit" className="btn w-full">
           등록하기
