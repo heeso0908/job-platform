@@ -91,49 +91,40 @@ function fromJsonLd(html: string): JobMeta | null {
   return null;
 }
 
-export interface RoleGroup {
-  org: string;
-  jobs: string[];
+function uniqueTrimmed(values: string[]): string[] {
+  return Array.from(new Set(values.map((v) => v.trim()).filter(Boolean)));
 }
 
 export function parseRoles(html: string): string[] {
+  const employments = readEmploymentCompany(html)?.employments;
+  if (Array.isArray(employments)) {
+    const fields = employments
+      .map((e) => (typeof e?.field === 'string' ? decodeEntities(e.field) : ''))
+      .filter(Boolean);
+    if (fields.length > 0) return uniqueTrimmed(fields);
+  }
+
   const description = metaContent(html, 'og:description') || metaContent(html, 'description');
   const list = description.match(/모집\s*직무\s*[:：]\s*(.+?)\s*(?:-\s*자소설닷컴)?$/)?.[1];
-  if (!list) return [];
-  const roles = list
-    .split(/,\s*(?![^()]*\))/)
-    .map((r) => r.trim())
-    .filter(Boolean);
-  return Array.from(new Set(roles));
+  return list ? uniqueTrimmed(list.split(/,\s*(?![^()]*\))/)) : [];
 }
 
-export function parseDeadline(html: string): string | null {
+function readEmploymentCompany(html: string): Record<string, any> | null {
   const raw = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)?.[1];
   if (!raw) return null;
   try {
-    const endTime = JSON.parse(raw)?.props?.pageProps?.initialEmploymentCompany?.end_time;
-    if (typeof endTime !== 'string') return null;
-    const date = new Date(endTime);
-    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    const company = JSON.parse(raw)?.props?.pageProps?.initialEmploymentCompany;
+    return company && typeof company === 'object' ? company : null;
   } catch {
     return null;
   }
 }
 
-export function splitRole(role: string): { org: string; job: string } {
-  const m = role.match(/^\[([^\]]+)\]\s*(.+)$/);
-  return m ? { org: m[1].trim(), job: m[2].trim() } : { org: '', job: role.trim() };
-}
-
-export function groupRoles(roles: string[]): RoleGroup[] {
-  const groups = new Map<string, string[]>();
-  for (const role of roles) {
-    const { org, job } = splitRole(role);
-    const jobs = groups.get(org) ?? [];
-    if (!jobs.includes(job)) jobs.push(job);
-    groups.set(org, jobs);
-  }
-  return Array.from(groups, ([org, jobs]) => ({ org, jobs }));
+export function parseDeadline(html: string): string | null {
+  const endTime = readEmploymentCompany(html)?.end_time;
+  if (typeof endTime !== 'string') return null;
+  const date = new Date(endTime);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
 export function normalizeJobUrl(raw: string): string {

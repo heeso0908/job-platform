@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { groupRoles, isSafePublicUrl, normalizeJobUrl, parseJobMeta, parseRoles, parseDeadline } from './jobUrl';
+import { isSafePublicUrl, normalizeJobUrl, parseJobMeta, parseRoles, parseDeadline } from './jobUrl';
 
 describe('parseDeadline', () => {
   const page = (company: unknown) =>
@@ -25,40 +25,46 @@ describe('parseDeadline', () => {
 });
 
 describe('parseRoles', () => {
-  const page = (roles: string) =>
+  const nextData = (employments: unknown) =>
+    `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
+      props: { pageProps: { initialEmploymentCompany: { employments } } },
+    })}</script>`;
+  const description = (roles: string) =>
     `<meta property="og:description" content="확인해보세요! 모집 직무 : ${roles} - 자소설닷컴" />`;
 
-  it('splits the 모집 직무 list and removes duplicates', () => {
-    const html = page('[HD한국조선해양] 구매, [HD현대중공업] 설계, [HD한국조선해양] 구매');
-    expect(parseRoles(html)).toEqual(['[HD한국조선해양] 구매', '[HD현대중공업] 설계']);
+  it('returns the job table texts exactly as written, in order', () => {
+    const html = nextData([
+      { id: 1, field: '[HD한국조선해양] 구매' },
+      { id: 2, field: '소프트웨어 개발 (삼성전자)' },
+      { id: 3, field: '  영업관리  ' },
+    ]);
+    expect(parseRoles(html)).toEqual(['[HD한국조선해양] 구매', '소프트웨어 개발 (삼성전자)', '영업관리']);
   });
 
-  it('does not split on commas inside parentheses', () => {
-    expect(parseRoles(page('[A사] 설비(전기, 기계), [A사] 영업'))).toEqual(['[A사] 설비(전기, 기계)', '[A사] 영업']);
+  it('removes only identical duplicates', () => {
+    const html = nextData([{ field: '설계' }, { field: '설계 ' }, { field: '설계(전기)' }]);
+    expect(parseRoles(html)).toEqual(['설계', '설계(전기)']);
   });
 
-  it('decodes html entities', () => {
-    expect(parseRoles(page('[A&amp;B] 개발, [A&amp;B] 기획'))).toEqual(['[A&B] 개발', '[A&B] 기획']);
+  it('skips entries without a usable field', () => {
+    const html = nextData([{ field: '' }, { field: null }, { id: 5 }, { field: '기획' }]);
+    expect(parseRoles(html)).toEqual(['기획']);
   });
 
-  it('returns an empty list when there is no role list', () => {
+  it('falls back to the 모집 직무 description when the page data has no roles', () => {
+    expect(parseRoles(description('개발, 기획, 개발'))).toEqual(['개발', '기획']);
+  });
+
+  it('does not split description roles on commas inside parentheses', () => {
+    expect(parseRoles(description('설비(전기, 기계), 영업'))).toEqual(['설비(전기, 기계)', '영업']);
+  });
+
+  it('decodes html entities in the description fallback', () => {
+    expect(parseRoles(description('A&amp;B 개발, 기획'))).toEqual(['A&B 개발', '기획']);
+  });
+
+  it('returns an empty list when there are no roles anywhere', () => {
     expect(parseRoles('<html></html>')).toEqual([]);
-  });
-});
-
-describe('groupRoles', () => {
-  it('groups bracketed roles by organisation, keeping first-seen order', () => {
-    expect(groupRoles(['[B사] 영업', '[A사] 설계', '[B사] 구매'])).toEqual([
-      { org: 'B사', jobs: ['영업', '구매'] },
-      { org: 'A사', jobs: ['설계'] },
-    ]);
-  });
-
-  it('puts roles without a bracket into a group with an empty org', () => {
-    expect(groupRoles(['비서직', '[A사] 설계'])).toEqual([
-      { org: '', jobs: ['비서직'] },
-      { org: 'A사', jobs: ['설계'] },
-    ]);
   });
 });
 
