@@ -113,10 +113,9 @@ export default function NewApplicationPage() {
           <RolePicker
             roles={roles}
             selected={selectedRole}
-            onSelect={(org, job) => {
-              setSelectedRole(`${org}|${job}`);
-              if (org) setCompany(org);
-              setPosition(job);
+            onSelect={(role) => {
+              setSelectedRole(role);
+              setPosition(role);
             }}
           />
         )}
