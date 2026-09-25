@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { listApplications } from '@/lib/db/applications';
 import { listStages } from '@/lib/db/stages';
+import { daysUntilKst, formatKstDate, formatKstTime } from '@/lib/date';
 
 interface UpcomingItem {
   applicationId: string;
@@ -59,7 +60,7 @@ export default async function DashboardPage() {
 
       <section className="space-y-3">
         {upcoming.map((item) => {
-          const days = daysUntil(new Date(item.scheduledAt));
+          const days = daysUntilKst(new Date(item.scheduledAt));
           return (
             <Link
               key={`${item.applicationId}-${item.stageType}-${item.scheduledAt}`}
@@ -80,9 +81,9 @@ export default async function DashboardPage() {
                 <p className="truncate text-sm text-ink-500">{item.position}</p>
               </div>
               <p className="shrink-0 text-right text-sm text-ink-400">
-                {new Date(item.scheduledAt).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
+                {formatKstDate(new Date(item.scheduledAt))}
                 <br />
-                {new Date(item.scheduledAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                {formatKstTime(new Date(item.scheduledAt))}
               </p>
             </Link>
           );
@@ -98,13 +99,4 @@ export default async function DashboardPage() {
       </section>
     </main>
   );
-}
-
-function toMidnightUTC(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
-
-function daysUntil(scheduledAt: Date): number {
-  const msPerDay = 1000 * 60 * 60 * 24;
-  return Math.round((toMidnightUTC(scheduledAt).getTime() - toMidnightUTC(new Date()).getTime()) / msPerDay);
 }

@@ -1,4 +1,6 @@
 // lib/reminders.ts
+import { kstDayNumber } from './date';
+
 export interface DueReminder {
   stageId: string;
   stageType: string;
@@ -8,16 +10,8 @@ export interface DueReminder {
   userId: string;
 }
 
-function toMidnightUTC(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
-
 export function isReminderDue(scheduledAt: Date, daysBefore: number, today: Date): boolean {
-  const scheduledMidnight = toMidnightUTC(scheduledAt);
-  const reminderDate = new Date(scheduledMidnight);
-  reminderDate.setUTCDate(reminderDate.getUTCDate() - daysBefore);
-  const todayMidnight = toMidnightUTC(today);
-  return reminderDate.getTime() === todayMidnight.getTime();
+  return kstDayNumber(scheduledAt) - daysBefore === kstDayNumber(today);
 }
 
 export async function findDueReminders(supabase: any, today: Date): Promise<DueReminder[]> {

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ApplicationStage } from '@/lib/db/stages';
+import { formatKstDateTime } from '@/lib/date';
 
 const STAGE_STATUSES = ['예정', '완료', '통과', '탈락'];
 
@@ -85,12 +86,7 @@ export default function StageTimeline({ applicationId, stages }: { applicationId
                 <div className="min-w-0">
                   <p className="font-bold">{stage.stage_type}</p>
                   <p className="text-sm text-ink-500">
-                    {new Date(stage.scheduled_at).toLocaleString('ko-KR', {
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {formatKstDateTime(new Date(stage.scheduled_at))}
                     {' · '}
                     {stage.slack_reminder_days_before}일 전 알림
                   </p>
