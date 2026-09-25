@@ -91,6 +91,38 @@ function fromJsonLd(html: string): JobMeta | null {
   return null;
 }
 
+export interface RoleGroup {
+  org: string;
+  jobs: string[];
+}
+
+export function parseRoles(html: string): string[] {
+  const description = metaContent(html, 'og:description') || metaContent(html, 'description');
+  const list = description.match(/모집\s*직무\s*[:：]\s*(.+?)\s*(?:-\s*자소설닷컴)?$/)?.[1];
+  if (!list) return [];
+  const roles = list
+    .split(/,\s*(?![^()]*\))/)
+    .map((r) => r.trim())
+    .filter(Boolean);
+  return Array.from(new Set(roles));
+}
+
+export function splitRole(role: string): { org: string; job: string } {
+  const m = role.match(/^\[([^\]]+)\]\s*(.+)$/);
+  return m ? { org: m[1].trim(), job: m[2].trim() } : { org: '', job: role.trim() };
+}
+
+export function groupRoles(roles: string[]): RoleGroup[] {
+  const groups = new Map<string, string[]>();
+  for (const role of roles) {
+    const { org, job } = splitRole(role);
+    const jobs = groups.get(org) ?? [];
+    if (!jobs.includes(job)) jobs.push(job);
+    groups.set(org, jobs);
+  }
+  return Array.from(groups, ([org, jobs]) => ({ org, jobs }));
+}
+
 export function normalizeJobUrl(raw: string): string {
   let url: URL;
   try {

@@ -1,5 +1,43 @@
 import { describe, it, expect } from 'vitest';
-import { isSafePublicUrl, normalizeJobUrl, parseJobMeta } from './jobUrl';
+import { groupRoles, isSafePublicUrl, normalizeJobUrl, parseJobMeta, parseRoles } from './jobUrl';
+
+describe('parseRoles', () => {
+  const page = (roles: string) =>
+    `<meta property="og:description" content="확인해보세요! 모집 직무 : ${roles} - 자소설닷컴" />`;
+
+  it('splits the 모집 직무 list and removes duplicates', () => {
+    const html = page('[HD한국조선해양] 구매, [HD현대중공업] 설계, [HD한국조선해양] 구매');
+    expect(parseRoles(html)).toEqual(['[HD한국조선해양] 구매', '[HD현대중공업] 설계']);
+  });
+
+  it('does not split on commas inside parentheses', () => {
+    expect(parseRoles(page('[A사] 설비(전기, 기계), [A사] 영업'))).toEqual(['[A사] 설비(전기, 기계)', '[A사] 영업']);
+  });
+
+  it('decodes html entities', () => {
+    expect(parseRoles(page('[A&amp;B] 개발, [A&amp;B] 기획'))).toEqual(['[A&B] 개발', '[A&B] 기획']);
+  });
+
+  it('returns an empty list when there is no role list', () => {
+    expect(parseRoles('<html></html>')).toEqual([]);
+  });
+});
+
+describe('groupRoles', () => {
+  it('groups bracketed roles by organisation, keeping first-seen order', () => {
+    expect(groupRoles(['[B사] 영업', '[A사] 설계', '[B사] 구매'])).toEqual([
+      { org: 'B사', jobs: ['영업', '구매'] },
+      { org: 'A사', jobs: ['설계'] },
+    ]);
+  });
+
+  it('puts roles without a bracket into a group with an empty org', () => {
+    expect(groupRoles(['비서직', '[A사] 설계'])).toEqual([
+      { org: '', jobs: ['비서직'] },
+      { org: 'A사', jobs: ['설계'] },
+    ]);
+  });
+});
 
 describe('normalizeJobUrl', () => {
   it('rewrites jasoseol list-modal urls to the detail page', () => {

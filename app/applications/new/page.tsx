@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import RolePicker from './RolePicker';
 
 export default function NewApplicationPage() {
   const [company, setCompany] = useState('');
@@ -9,6 +10,8 @@ export default function NewApplicationPage() {
   const [applyLink, setApplyLink] = useState('');
   const [memo, setMemo] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [roles, setRoles] = useState<string[]>([]);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [importState, setImportState] = useState<'idle' | 'loading' | 'done' | 'failed'>('idle');
   const router = useRouter();
 
@@ -22,8 +25,10 @@ export default function NewApplicationPage() {
         body: JSON.stringify({ url: url.trim() }),
       });
       if (!res.ok) throw new Error('parse failed');
-      const meta: { company: string; position: string; url?: string } = await res.json();
+      const meta: { company: string; position: string; roles?: string[]; url?: string } = await res.json();
       if (!meta.company && !meta.position) throw new Error('nothing found');
+      setRoles(meta.roles ?? []);
+      setSelectedRole(null);
       if (meta.url) setApplyLink(meta.url);
       if (meta.company) setCompany(meta.company);
       if (meta.position) setPosition(meta.position);
@@ -67,6 +72,8 @@ export default function NewApplicationPage() {
             onChange={(e) => {
               setApplyLink(e.target.value);
               setImportState('idle');
+              setRoles([]);
+              setSelectedRole(null);
             }}
             onPaste={(e) => {
               const pasted = e.clipboardData.getData('text');
@@ -80,6 +87,18 @@ export default function NewApplicationPage() {
           {importState === 'done' && <p className="px-1 text-sm font-semibold text-brand-700">회사와 직무를 불러왔어요. 확인 후 수정할 수 있어요.</p>}
           {importState === 'failed' && <p className="px-1 text-sm text-ink-500">자동으로 읽지 못했어요. 직접 입력해주세요.</p>}
         </div>
+
+        {roles.length > 1 && (
+          <RolePicker
+            roles={roles}
+            selected={selectedRole}
+            onSelect={(org, job) => {
+              setSelectedRole(`${org}|${job}`);
+              if (org) setCompany(org);
+              setPosition(job);
+            }}
+          />
+        )}
 
         <input className="input" placeholder="회사명" value={company} onChange={(e) => setCompany(e.target.value)} required />
         <input className="input" placeholder="직무" value={position} onChange={(e) => setPosition(e.target.value)} required />
