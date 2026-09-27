@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import RolePicker from './RolePicker';
+import DateTimePicker from '../../DateTimePicker';
 
 function toLocalInput(iso: string): string {
   const d = new Date(iso);
@@ -126,7 +127,7 @@ export default function NewApplicationPage() {
           <span className="text-sm font-semibold text-ink-700">
             서류 마감 {importState === 'done' && deadline ? '(공고에서 가져왔어요)' : '(선택)'}
           </span>
-          <input className="input" type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+          <DateTimePicker value={deadline} onChange={setDeadline} placeholder="마감 일시를 선택해주세요" />
           <span className="block px-1 text-xs text-ink-400">
             인적성·면접 같은 이후 전형은 등록 후 공고 상세에서 직접 추가해요.
           </span>
