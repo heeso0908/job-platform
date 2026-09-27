@@ -20,10 +20,7 @@ export function formatKstDate(date: Date): string {
 
 export function formatKstTime(date: Date): string {
   const k = toKst(date);
-  const hour = k.getUTCHours();
-  const period = hour < 12 ? '오전' : '오후';
-  const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-  return `${period} ${String(hour12).padStart(2, '0')}:${String(k.getUTCMinutes()).padStart(2, '0')}`;
+  return `${String(k.getUTCHours()).padStart(2, '0')}:${String(k.getUTCMinutes()).padStart(2, '0')}`;
 }
 
 export function formatKstDateTime(date: Date): string {

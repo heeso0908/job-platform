@@ -30,7 +30,13 @@ describe('KST formatting', () => {
 
   it('formats date and time in Korea time regardless of server timezone', () => {
     expect(formatKstDate(d)).toBe('9월 27일');
-    expect(formatKstTime(d)).toBe('오후 11:59');
-    expect(formatKstDateTime(d)).toBe('9월 27일 오후 11:59');
+    expect(formatKstTime(d)).toBe('23:59');
+    expect(formatKstDateTime(d)).toBe('9월 27일 23:59');
+  });
+
+  it('uses a 24-hour clock with zero-padded hours', () => {
+    expect(formatKstTime(new Date('2026-09-26T15:05:00Z'))).toBe('00:05'); // 00:05 KST
+    expect(formatKstTime(new Date('2026-09-27T00:30:00Z'))).toBe('09:30'); // 09:30 KST
+    expect(formatKstTime(new Date('2026-09-27T03:00:00Z'))).toBe('12:00'); // 12:00 KST
   });
 });
