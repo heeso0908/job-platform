@@ -29,3 +29,4 @@ Supabase SQL Editor에서 `supabase/migrations` 안의 파일을 번호 순서�
 - `0001_init.sql` — 공고, 전형 일정, Slack 웹훅 테이블
 - `0002_essay_questions.sql` — 자소서 문항/답변/태그 테이블과 검색 인덱스 (자소서 기능에 필요)
 - `0003_experiences.sql` — 경험 정리 라이브러리 테이블 (경험 기능에 필요)
+- `0004_experience_category_fields.sql` — 경험 카테고리별 전용 필드 저장용 컬럼 추가

@@ -61,6 +61,7 @@ describe('createExperience', () => {
       summary: null,
       detail: '',
       tags: [],
+      fields: {},
     });
   });
 
@@ -75,9 +76,15 @@ describe('createExperience', () => {
       summary: 'Pro',
       detail: '불량률 감소',
       tags: ['품질'],
+      fields: { department: 'Cleaning기술2팀', employment_type: '정규직' },
     });
     const insert = q.calls.find((c) => c.method === 'insert');
-    expect(insert?.args[0]).toMatchObject({ category: '경력', organization: 'Cleaning기술2팀', tags: ['품질'] });
+    expect(insert?.args[0]).toMatchObject({
+      category: '경력',
+      organization: 'Cleaning기술2팀',
+      tags: ['품질'],
+      fields: { department: 'Cleaning기술2팀', employment_type: '정규직' },
+    });
   });
 });
 

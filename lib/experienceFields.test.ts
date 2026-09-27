@@ -1,0 +1,52 @@
+import { describe, it, expect } from 'vitest';
+import { FIELD_SCHEMAS, getFieldSchema, sanitizeFields } from './experienceFields';
+
+describe('getFieldSchema', () => {
+  it('returns the defined fields for a known category', () => {
+    expect(getFieldSchema('경력').map((f) => f.key)).toEqual(['employment_type', 'employment_status', 'department', 'position']);
+  });
+
+  it('returns an empty array for categories without extra fields (스킬, 기타)', () => {
+    expect(getFieldSchema('스킬')).toEqual([]);
+    expect(getFieldSchema('기타')).toEqual([]);
+  });
+
+  it('returns an empty array for an unknown category', () => {
+    expect(getFieldSchema('없는카테고리')).toEqual([]);
+  });
+});
+
+describe('FIELD_SCHEMAS coverage', () => {
+  it('defines fields for every category that needs them', () => {
+    for (const c of ['학력', '경력', '프로젝트', '자격증', '어학', '수상', '학내외활동', '봉사', '교육']) {
+      expect(FIELD_SCHEMAS[c]?.length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('sanitizeFields', () => {
+  it('keeps only keys defined in the category schema, trimmed', () => {
+    expect(sanitizeFields('경력', { employment_type: ' 정규직 ', department: '기획팀', unknown_key: 'x' })).toEqual({
+      employment_type: '정규직',
+      department: '기획팀',
+    });
+  });
+
+  it('drops empty or missing values', () => {
+    expect(sanitizeFields('경력', { employment_type: '', department: '   ' })).toEqual({});
+  });
+
+  it('drops select values that are not one of the allowed options', () => {
+    expect(sanitizeFields('경력', { employment_type: '알바' })).toEqual({});
+    expect(sanitizeFields('경력', { employment_type: '정규직' })).toEqual({ employment_type: '정규직' });
+  });
+
+  it('drops number fields that are not numeric, keeps numeric ones as strings', () => {
+    expect(sanitizeFields('프로젝트', { contribution_percent: 'abc' })).toEqual({});
+    expect(sanitizeFields('프로젝트', { contribution_percent: '50' })).toEqual({ contribution_percent: '50' });
+  });
+
+  it('returns an empty object for a category with no schema', () => {
+    expect(sanitizeFields('기타', { anything: 'x' })).toEqual({});
+  });
+});

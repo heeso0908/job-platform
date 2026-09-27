@@ -11,6 +11,7 @@ export interface Experience {
   summary: string | null;
   detail: string;
   tags: string[];
+  fields: Record<string, string>;
   created_at: string;
   updated_at: string;
 }
@@ -24,6 +25,7 @@ export interface CreateExperienceInput {
   summary?: string | null;
   detail?: string;
   tags?: string[];
+  fields?: Record<string, string>;
 }
 
 export type UpdateExperienceInput = Partial<{
@@ -35,6 +37,7 @@ export type UpdateExperienceInput = Partial<{
   summary: string | null;
   detail: string;
   tags: string[];
+  fields: Record<string, string>;
 }>;
 
 export interface SearchExperienceOptions {
@@ -62,6 +65,7 @@ export async function createExperience(supabase: any, userId: string, input: Cre
       summary: input.summary ?? null,
       detail: input.detail ?? '',
       tags: input.tags ?? [],
+      fields: input.fields ?? {},
     })
     .select()
     .single();

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { deleteExperience, updateExperience, type UpdateExperienceInput } from '@/lib/db/experiences';
 import { normalizeTags } from '@/lib/text';
+import { sanitizeFields } from '@/lib/experienceFields';
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json().catch(() => null);
@@ -19,6 +20,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   if (typeof body.detail === 'string') patch.detail = body.detail;
   if (Array.isArray(body.tags)) {
     patch.tags = normalizeTags(body.tags.filter((t: unknown): t is string => typeof t === 'string'));
+  }
+  if (body.fields && typeof body.fields === 'object' && typeof body.category === 'string') {
+    patch.fields = sanitizeFields(body.category, body.fields);
   }
 
   if (Object.keys(patch).length === 0) {

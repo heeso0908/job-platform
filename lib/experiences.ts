@@ -1,3 +1,5 @@
+import { getFieldSchema } from './experienceFields';
+
 export const CATEGORIES = [
   '학력',
   '경력',
@@ -28,12 +30,20 @@ export interface CopyableExperience {
   period_end: string | null;
   summary: string | null;
   detail: string;
+  fields?: Record<string, string>;
 }
 
 export function buildCopyText(exp: CopyableExperience): string {
   const lines = [exp.title.trim(), exp.organization?.trim() || '', formatPeriod(exp.period_start, exp.period_end), exp.summary?.trim() || ''].filter(
     Boolean
   );
+
+  const fields = exp.fields ?? {};
+  for (const def of getFieldSchema(exp.category)) {
+    const value = fields[def.key]?.trim();
+    if (value) lines.push(`${def.label}: ${value}`);
+  }
+
   const detail = exp.detail.trim();
   return detail ? [...lines, '', detail].join('\n') : lines.join('\n');
 }

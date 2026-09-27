@@ -55,6 +55,57 @@ describe('buildCopyText', () => {
       'SK실트론'
     );
   });
+
+  it('includes category fields as "label: value" lines, in schema order, before the detail block', () => {
+    expect(
+      buildCopyText({
+        ...base,
+        fields: { position: 'Pro', department: 'Cleaning기술2팀', employment_type: '정규직' },
+      })
+    ).toBe(
+      [
+        'SK실트론',
+        'Cleaning기술2팀',
+        '2023.01.01 ~ 2024.03.14',
+        'Pro',
+        '고용형태: 정규직',
+        '부서: Cleaning기술2팀',
+        '직급: Pro',
+        '',
+        'Spotfire 활용 액다량 불량 모니터링',
+        '300mm E/I 공정 불량률 70% 감소',
+      ].join('\n')
+    );
+  });
+
+  it('omits category fields that are empty or undefined', () => {
+    expect(buildCopyText({ ...base, fields: { position: 'Pro' } })).toBe(
+      [
+        'SK실트론',
+        'Cleaning기술2팀',
+        '2023.01.01 ~ 2024.03.14',
+        'Pro',
+        '직급: Pro',
+        '',
+        'Spotfire 활용 액다량 불량 모니터링',
+        '300mm E/I 공정 불량률 70% 감소',
+      ].join('\n')
+    );
+  });
+
+  it('works with no fields object at all (backward compatible)', () => {
+    expect(buildCopyText(base)).toBe(
+      [
+        'SK실트론',
+        'Cleaning기술2팀',
+        '2023.01.01 ~ 2024.03.14',
+        'Pro',
+        '',
+        'Spotfire 활용 액다량 불량 모니터링',
+        '300mm E/I 공정 불량률 70% 감소',
+      ].join('\n')
+    );
+  });
 });
 
 describe('CATEGORIES', () => {

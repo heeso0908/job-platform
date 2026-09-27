@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Experience } from '@/lib/db/experiences';
 import { buildCopyText, formatPeriod } from '@/lib/experiences';
+import { getFieldSchema } from '@/lib/experienceFields';
 import ExperienceForm from './ExperienceForm';
 
 export default function ExperienceCard({
@@ -65,6 +66,18 @@ export default function ExperienceCard({
 
       {open && (
         <div className="space-y-3">
+          {getFieldSchema(experience.category).some((def) => experience.fields[def.key]) && (
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-2xl bg-ink-100 p-4 text-sm">
+              {getFieldSchema(experience.category).map((def) =>
+                experience.fields[def.key] ? (
+                  <div key={def.key} className="contents">
+                    <dt className="text-ink-400">{def.label}</dt>
+                    <dd className="text-ink-700">{experience.fields[def.key]}</dd>
+                  </div>
+                ) : null
+              )}
+            </dl>
+          )}
           {experience.detail && (
             <p className="whitespace-pre-wrap rounded-2xl bg-ink-100 p-4 text-sm leading-relaxed text-ink-700">{experience.detail}</p>
           )}
