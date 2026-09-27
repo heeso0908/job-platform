@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ApplicationStage } from '@/lib/db/stages';
 import { formatKstDateTime } from '@/lib/date';
+import DateTimePicker from '../../DateTimePicker';
 
 const STAGE_STATUSES = ['예정', '완료', '통과', '탈락'];
 
@@ -128,7 +129,7 @@ export default function StageTimeline({ applicationId, stages }: { applicationId
           onChange={(e) => setStageType(e.target.value)}
           required
         />
-        <input className="input" type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} required />
+        <DateTimePicker value={scheduledAt} onChange={setScheduledAt} placeholder="일정 일시를 선택해주세요" required />
         <label className="flex items-center gap-3 text-sm text-ink-500">
           <input
             className="input !w-20 text-center"
