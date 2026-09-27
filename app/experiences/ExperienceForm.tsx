@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Experience } from '@/lib/db/experiences';
 import { CATEGORIES } from '@/lib/experiences';
+import { getFieldSchema } from '@/lib/experienceFields';
 import TagInput from '../TagInput';
 import DatePicker from '../DatePicker';
 
@@ -25,6 +26,7 @@ export default function ExperienceForm({
   const [summary, setSummary] = useState(initial?.summary ?? '');
   const [detail, setDetail] = useState(initial?.detail ?? '');
   const [tags, setTags] = useState<string[]>(initial?.tags ?? []);
+  const [fields, setFields] = useState<Record<string, string>>(initial?.fields ?? {});
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -41,6 +43,7 @@ export default function ExperienceForm({
       summary: summary || null,
       detail,
       tags,
+      fields,
     };
     const res = initial
       ? await fetch(`/api/experiences/${initial.id}`, {
@@ -67,6 +70,7 @@ export default function ExperienceForm({
       setSummary('');
       setDetail('');
       setTags([]);
+      setFields({});
     }
     onSaved();
   }
@@ -84,7 +88,10 @@ export default function ExperienceForm({
           <button
             key={c}
             type="button"
-            onClick={() => setCategory(c)}
+            onClick={() => {
+              setCategory(c);
+              setFields({});
+            }}
             className={`rounded-full px-3 py-1 text-xs font-bold transition ${
               category === c ? 'bg-brand-500 text-white' : 'bg-white text-ink-500 hover:bg-ink-200'
             }`}
@@ -116,10 +123,41 @@ export default function ExperienceForm({
 
       <input
         className="input bg-white"
-        placeholder="한 줄 요약 (예: 직급, 등급, 전공, 역할)"
+        placeholder="한 줄 요약 (선택)"
         value={summary}
         onChange={(e) => setSummary(e.target.value)}
       />
+
+      {getFieldSchema(category).length > 0 && (
+        <div className="grid grid-cols-1 gap-2 rounded-2xl bg-white p-3 sm:grid-cols-2">
+          {getFieldSchema(category).map((def) => (
+            <label key={def.key} className="space-y-1 text-xs font-semibold text-ink-500">
+              {def.label}
+              {def.type === 'select' ? (
+                <select
+                  className="input !py-2"
+                  value={fields[def.key] ?? ''}
+                  onChange={(e) => setFields((f) => ({ ...f, [def.key]: e.target.value }))}
+                >
+                  <option value="">선택 안 함</option>
+                  {def.options!.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="input !py-2"
+                  type={def.type === 'number' ? 'number' : 'text'}
+                  value={fields[def.key] ?? ''}
+                  onChange={(e) => setFields((f) => ({ ...f, [def.key]: e.target.value }))}
+                />
+              )}
+            </label>
+          ))}
+        </div>
+      )}
 
       <textarea
         className="input min-h-32 bg-white"

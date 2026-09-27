@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createExperience, listExperiences, searchExperiences } from '@/lib/db/experiences';
 import { normalizeTags } from '@/lib/text';
+import { sanitizeFields } from '@/lib/experienceFields';
 
 export async function GET(request: NextRequest) {
   const supabase = createServerSupabaseClient();
@@ -24,8 +25,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '제목을 입력해주세요.' }, { status: 400 });
   }
 
+  const category = typeof body.category === 'string' ? body.category : '기타';
   const experience = await createExperience(supabase, user.id, {
-    category: typeof body.category === 'string' ? body.category : undefined,
+    category,
     title: body.title.trim(),
     organization: typeof body.organization === 'string' ? body.organization : null,
     period_start: typeof body.period_start === 'string' ? body.period_start : null,
@@ -33,6 +35,7 @@ export async function POST(request: NextRequest) {
     summary: typeof body.summary === 'string' ? body.summary : null,
     detail: typeof body.detail === 'string' ? body.detail : '',
     tags: Array.isArray(body.tags) ? normalizeTags(body.tags.filter((t: unknown): t is string => typeof t === 'string')) : [],
+    fields: body.fields && typeof body.fields === 'object' ? sanitizeFields(category, body.fields) : {},
   });
   return NextResponse.json(experience, { status: 201 });
 }
