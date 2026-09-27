@@ -1,5 +1,33 @@
 import { describe, it, expect } from 'vitest';
-import { buildMonthGrid, formatDisplay, formatValue, parseValue } from './datetimeInput';
+import { buildMonthGrid, formatDateDisplay, formatDateValue, formatDisplay, formatValue, parseDateValue, parseValue } from './datetimeInput';
+
+describe('parseDateValue / formatDateValue', () => {
+  it('round-trips a date-only string', () => {
+    const parts = parseDateValue('2026-09-27');
+    expect(parts).toEqual({ year: 2026, month: 9, day: 27 });
+    expect(formatDateValue(parts!)).toBe('2026-09-27');
+  });
+
+  it('zero-pads when formatting', () => {
+    expect(formatDateValue({ year: 2026, month: 1, day: 5 })).toBe('2026-01-05');
+  });
+
+  it('returns null for empty or malformed values', () => {
+    expect(parseDateValue('')).toBeNull();
+    expect(parseDateValue('2026-09-27T00:00')).toBeNull();
+    expect(parseDateValue('nope')).toBeNull();
+  });
+});
+
+describe('formatDateDisplay', () => {
+  it('shows a readable Korean date with no time', () => {
+    expect(formatDateDisplay('2026-09-27')).toBe('2026년 9월 27일');
+  });
+
+  it('returns an empty string for an empty value', () => {
+    expect(formatDateDisplay('')).toBe('');
+  });
+});
 
 describe('parseValue / formatValue', () => {
   it('round-trips a datetime-local string', () => {
