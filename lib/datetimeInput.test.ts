@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildMonthGrid, formatDisplay, formatValue, from12h, parseValue, to12h } from './datetimeInput';
+import { buildMonthGrid, formatDisplay, formatValue, parseValue } from './datetimeInput';
 
 describe('parseValue / formatValue', () => {
   it('round-trips a datetime-local string', () => {
@@ -19,22 +19,6 @@ describe('parseValue / formatValue', () => {
   });
 });
 
-describe('12-hour conversion', () => {
-  it('converts 24h to period + 12h', () => {
-    expect(to12h(0)).toEqual({ period: '오전', hour12: 12 });
-    expect(to12h(9)).toEqual({ period: '오전', hour12: 9 });
-    expect(to12h(12)).toEqual({ period: '오후', hour12: 12 });
-    expect(to12h(23)).toEqual({ period: '오후', hour12: 11 });
-  });
-
-  it('converts back to 24h', () => {
-    expect(from12h('오전', 12)).toBe(0);
-    expect(from12h('오전', 9)).toBe(9);
-    expect(from12h('오후', 12)).toBe(12);
-    expect(from12h('오후', 11)).toBe(23);
-  });
-});
-
 describe('buildMonthGrid', () => {
   it('lays out September 2026 (starts on Tuesday) with Sunday-first weeks', () => {
     const grid = buildMonthGrid(2026, 9);
@@ -50,9 +34,10 @@ describe('buildMonthGrid', () => {
 });
 
 describe('formatDisplay', () => {
-  it('shows a readable Korean date and time', () => {
-    expect(formatDisplay('2026-09-27T23:59')).toBe('2026년 9월 27일 오후 11:59');
-    expect(formatDisplay('2026-09-27T00:05')).toBe('2026년 9월 27일 오전 12:05');
+  it('shows a readable Korean date with a 24-hour time', () => {
+    expect(formatDisplay('2026-09-27T23:59')).toBe('2026년 9월 27일 23:59');
+    expect(formatDisplay('2026-09-27T00:05')).toBe('2026년 9월 27일 00:05');
+    expect(formatDisplay('2026-09-27T09:30')).toBe('2026년 9월 27일 09:30');
   });
 
   it('returns an empty string for an empty value', () => {

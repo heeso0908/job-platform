@@ -1,19 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import {
-  buildMonthGrid,
-  formatDisplay,
-  formatValue,
-  from12h,
-  parseValue,
-  to12h,
-  type DateTimeParts,
-  type Period,
-} from '@/lib/datetimeInput';
+import { buildMonthGrid, formatDisplay, formatValue, parseValue, type DateTimeParts } from '@/lib/datetimeInput';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-const HOURS = Array.from({ length: 12 }, (_, i) => i + 1);
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 
 function todayParts(): Pick<DateTimeParts, 'year' | 'month' | 'day'> {
@@ -73,7 +64,6 @@ export default function DateTimePicker({
     onChange(formatValue({ ...base, ...patch }));
   }
 
-  const time = to12h(parsed?.hour ?? 9);
   const weeks = buildMonthGrid(view.year, view.month);
 
   return (
@@ -161,24 +151,10 @@ export default function DateTimePicker({
           </div>
 
           <div className="flex gap-2 border-t border-ink-100 pt-4">
-            <div className="flex flex-col gap-1">
-              {(['오전', '오후'] as Period[]).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => update({ hour: from12h(p, time.hour12) })}
-                  className={`rounded-xl px-3 py-2 text-sm font-bold transition ${
-                    time.period === p ? 'bg-brand-500 text-white' : 'bg-ink-100 text-ink-500 hover:bg-ink-200'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
             <ScrollColumn label="시">
               {HOURS.map((h) => (
-                <Option key={h} active={time.hour12 === h} onClick={() => update({ hour: from12h(time.period, h) })}>
-                  {h}
+                <Option key={h} active={(parsed?.hour ?? 9) === h} onClick={() => update({ hour: h })}>
+                  {String(h).padStart(2, '0')}
                 </Option>
               ))}
             </ScrollColumn>
