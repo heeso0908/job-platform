@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Essay } from '@/lib/db/essays';
-import { countChars } from '@/lib/essays';
+import { countChars } from '@/lib/text';
 import { formatKstDate } from '@/lib/date';
 import TagInput from '../../TagInput';
 

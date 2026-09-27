@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { normalizeTags } from '@/lib/essays';
+import { normalizeTags } from '@/lib/text';
 
 export default function TagInput({
   tags,
