@@ -21,3 +21,10 @@
 ## Sharing this app with someone else
 
 They should fork/clone the repo and deploy their own copy with their own Supabase project, their own `ALLOWED_SIGNUP_EMAIL`, and their own Vercel project. This app is single-tenant: one deployment = one user.
+
+## Database migrations
+
+Supabase SQL Editor에서 `supabase/migrations` 안의 파일을 번호 순서대로 실행하세요. 파일은 여러 번 실행해도 안전합니다.
+
+- `0001_init.sql` — 공고, 전형 일정, Slack 웹훅 테이블
+- `0002_essay_questions.sql` — 자소서 문항/답변/태그 테이블과 검색 인덱스 (자소서 기능에 필요)
