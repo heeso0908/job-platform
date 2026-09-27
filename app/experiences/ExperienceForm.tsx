@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Experience } from '@/lib/db/experiences';
 import { CATEGORIES } from '@/lib/experiences';
 import TagInput from '../TagInput';
+import DatePicker from '../DatePicker';
 
 export default function ExperienceForm({
   initial,
@@ -107,20 +108,9 @@ export default function ExperienceForm({
         onChange={(e) => setOrganization(e.target.value)}
       />
 
-      <div className="flex items-center gap-2">
-        <input
-          type="date"
-          className="input min-w-0 flex-1 bg-white !px-2"
-          value={periodStart}
-          onChange={(e) => setPeriodStart(e.target.value)}
-        />
-        <span className="shrink-0 text-ink-400">~</span>
-        <input
-          type="date"
-          className="input min-w-0 flex-1 bg-white !px-2"
-          value={periodEnd}
-          onChange={(e) => setPeriodEnd(e.target.value)}
-        />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <DatePicker value={periodStart} onChange={setPeriodStart} placeholder="시작일" />
+        <DatePicker value={periodEnd} onChange={setPeriodEnd} placeholder="종료일 (진행 중이면 비워두세요)" />
       </div>
       <p className="px-1 text-xs text-ink-400">진행 중이거나 하루짜리 항목은 하나만 입력해도 돼요.</p>
 
