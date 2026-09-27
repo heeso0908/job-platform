@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { deleteEssay, updateEssay, type UpdateEssayInput } from '@/lib/db/essays';
-import { normalizeTags } from '@/lib/essays';
+import { normalizeTags } from '@/lib/text';
 
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json().catch(() => null);

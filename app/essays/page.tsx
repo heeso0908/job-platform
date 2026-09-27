@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { EssayWithApplication } from '@/lib/db/essays';
-import { makeSnippet, splitHighlight } from '@/lib/essays';
+import { makeSnippet, splitHighlight } from '@/lib/text';
 
 interface SearchResponse {
   results: EssayWithApplication[];
