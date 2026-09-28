@@ -5,10 +5,32 @@ import {
   createApplication,
   updateApplication,
   deleteApplication,
+  searchApplications,
 } from './applications';
 
 function makeSupabaseStub(overrides: Record<string, any>) {
   return { from: vi.fn(() => overrides) };
+}
+
+type Call = { method: string; args: unknown[] };
+
+function makeQuery(result: { data?: unknown; error?: { message: string } | null }) {
+  const calls: Call[] = [];
+  const builder: any = new Proxy(
+    {},
+    {
+      get(_t, prop: string) {
+        if (prop === 'then') {
+          return (resolve: (v: unknown) => void) => resolve({ data: result.data ?? null, error: result.error ?? null });
+        }
+        return (...args: unknown[]) => {
+          calls.push({ method: prop, args });
+          return builder;
+        };
+      },
+    }
+  );
+  return { builder, calls };
 }
 
 describe('applications data layer', () => {
@@ -95,5 +117,35 @@ describe('applications data layer', () => {
       }),
     });
     await expect(deleteApplication(supabase as any, '1')).resolves.toBeUndefined();
+  });
+});
+
+describe('searchApplications', () => {
+  it('filters by company or position when a keyword is given', async () => {
+    const q = makeQuery({ data: [] });
+    await searchApplications({ from: () => q.builder } as any, { q: 'HD현대' });
+    expect(q.calls).toContainEqual({
+      method: 'or',
+      args: ['company.ilike."%HD현대%",position.ilike."%HD현대%"'],
+    });
+  });
+
+  it('filters by status', async () => {
+    const q = makeQuery({ data: [] });
+    await searchApplications({ from: () => q.builder } as any, { status: '진행중' });
+    expect(q.calls).toContainEqual({ method: 'eq', args: ['status', '진행중'] });
+  });
+
+  it('orders by most recently created and applies no filters when none are given', async () => {
+    const q = makeQuery({ data: [] });
+    await searchApplications({ from: () => q.builder } as any, {});
+    expect(q.calls).toContainEqual({ method: 'order', args: ['created_at', { ascending: false }] });
+    expect(q.calls.some((c) => c.method === 'or')).toBe(false);
+    expect(q.calls.some((c) => c.method === 'eq')).toBe(false);
+  });
+
+  it('throws on error', async () => {
+    const q = makeQuery({ error: { message: 'boom' } });
+    await expect(searchApplications({ from: () => q.builder } as any, {})).rejects.toThrow('boom');
   });
 });
