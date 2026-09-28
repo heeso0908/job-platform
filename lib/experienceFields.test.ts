@@ -34,8 +34,12 @@ describe('getFieldSchema', () => {
     expect(getFieldSchema('경력').map((f) => f.key)).toEqual(['employment_type', 'employment_status', 'department', 'position']);
   });
 
-  it('returns skill-specific fields for 스킬', () => {
-    expect(getFieldSchema('스킬').map((f) => f.key)).toEqual(['skill_type', 'level', 'years']);
+  it('returns skill-specific fields for 스킬, with a fixed set of year options', () => {
+    const schema = getFieldSchema('스킬');
+    expect(schema.map((f) => f.key)).toEqual(['skill_type', 'level', 'years']);
+    const years = schema.find((f) => f.key === 'years')!;
+    expect(years.type).toBe('select');
+    expect(years.options).toEqual(['1년', '2년', '3년', '4년', '5년', '6년', '7년', '8년', '9년', '10년 이상']);
   });
 
   it('returns an empty array for categories without extra fields (기타)', () => {
@@ -81,12 +85,14 @@ describe('sanitizeFields', () => {
     expect(sanitizeFields('기타', { anything: 'x' })).toEqual({});
   });
 
-  it('sanitizes 스킬 fields, dropping a level outside the allowed options', () => {
+  it('sanitizes 스킬 fields, dropping a level or years outside the allowed options', () => {
     expect(sanitizeFields('스킬', { skill_type: '언어', level: '중급', years: '1년' })).toEqual({
       skill_type: '언어',
       level: '중급',
       years: '1년',
     });
+    expect(sanitizeFields('스킬', { years: '10년 이상' })).toEqual({ years: '10년 이상' });
     expect(sanitizeFields('스킬', { level: '엄청잘함' })).toEqual({});
+    expect(sanitizeFields('스킬', { years: '15년' })).toEqual({});
   });
 });
