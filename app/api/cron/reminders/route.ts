@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminSupabaseClient } from '@/lib/supabase/admin';
 import { findDueReminders } from '@/lib/reminders';
 import { getSlackWebhook } from '@/lib/db/slackWebhook';
+import { markStageReminderSent } from '@/lib/db/stages';
 import { sendSlackMessage } from '@/lib/slack';
 import { formatKstRange } from '@/lib/date';
 
@@ -16,7 +17,8 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminSupabaseClient();
-  const dueReminders = await findDueReminders(supabase, new Date());
+  const now = new Date();
+  const dueReminders = await findDueReminders(supabase, now);
 
   let sentCount = 0;
   let failedCount = 0;
@@ -38,6 +40,7 @@ export async function GET(request: NextRequest) {
         webhookUrl,
         `[${reminder.company}] ${reminder.position} — ${reminder.stageType} 일정이 ${scheduledDate}입니다.`
       );
+      await markStageReminderSent(supabase, reminder.stageId, now.toISOString());
       sentCount += 1;
     } catch (err) {
       failedCount += 1;

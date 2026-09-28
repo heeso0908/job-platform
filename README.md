@@ -15,7 +15,11 @@
 
 1. Push this repo to GitHub and import it in Vercel.
 2. Add the same environment variables from `.env.local` in the Vercel project settings.
-3. Vercel reads `vercel.json` automatically and schedules `/api/cron/reminders` to run daily at 00:00 UTC. Adjust the cron schedule there if you want a different time.
+3. Vercel reads `vercel.json` automatically and schedules `/api/cron/reminders` to run daily at 00:00 UTC as a fallback. On the free Hobby plan, Vercel Cron can't run more often than once a day, so reminders would all arrive around the same time each day regardless of each stage's actual time. To have reminders arrive close to each stage's own scheduled time (e.g. exactly 1 day before, same hour), set up a free external scheduler to call the endpoint every 15–30 minutes instead:
+   - Create a free account at https://cron-job.org (or a similar service).
+   - Add a job that sends a `GET` request to `https://<your-app>.vercel.app/api/cron/reminders` every 15–30 minutes.
+   - Add an `Authorization` header: `Bearer <CRON_SECRET>` (the same value as your `CRON_SECRET` env var).
+   - The endpoint is idempotent — calling it more often than needed is harmless; a reminder is only ever sent once per stage (tracked in `last_reminder_sent_at`).
 4. In Settings → Slack, paste a Slack Incoming Webhook URL (create one at https://api.slack.com/messaging/webhooks) so reminders have somewhere to go.
 
 ## Sharing this app with someone else
@@ -31,3 +35,4 @@ Supabase SQL Editor에서 `supabase/migrations` 안의 파일을 번호 순서�
 - `0003_experiences.sql` — 경험 정리 라이브러리 테이블 (경험 기능에 필요)
 - `0004_experience_category_fields.sql` — 경험 카테고리별 전용 필드 저장용 컬럼 추가
 - `0005_stage_end_time.sql` — 전형 일정의 선택적 종료 일시 컬럼 추가 (인적성처럼 시간 범위가 있는 경우)
+- `0006_reminder_sent_tracking.sql` — 알림 중복 발송 방지를 위한 마지막 발송 시각 컬럼 추가 (자주 도는 외부 크론 대응에 필요)

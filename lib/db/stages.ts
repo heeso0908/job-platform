@@ -69,3 +69,8 @@ export async function deleteStage(supabase: any, id: string): Promise<void> {
   const { error } = await supabase.from('application_stages').delete().eq('id', id);
   if (error) throw new Error(error.message);
 }
+
+export async function markStageReminderSent(supabase: any, id: string, sentAtIso: string): Promise<void> {
+  const { error } = await supabase.from('application_stages').update({ last_reminder_sent_at: sentAtIso }).eq('id', id);
+  if (error) throw new Error(error.message);
+}
