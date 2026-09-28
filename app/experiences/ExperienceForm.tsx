@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Experience } from '@/lib/db/experiences';
 import { CATEGORIES } from '@/lib/experiences';
-import { getFieldSchema } from '@/lib/experienceFields';
+import { getFieldSchema, getPlaceholders } from '@/lib/experienceFields';
 import TagInput from '../TagInput';
 import DatePicker from '../DatePicker';
 import Select from '../Select';
@@ -76,6 +76,8 @@ export default function ExperienceForm({
     onSaved();
   }
 
+  const placeholders = getPlaceholders(category);
+
   return (
     <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl bg-ink-100 p-4">
       {error && (
@@ -104,14 +106,14 @@ export default function ExperienceForm({
 
       <input
         className="input bg-white"
-        placeholder="제목 (예: SK실트론, SQLD, 대학생 화학공학 경진대회)"
+        placeholder={placeholders.title}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         required
       />
       <input
         className="input bg-white"
-        placeholder="기관/장소 (예: 회사명, 발급기관, 학교)"
+        placeholder={placeholders.organization}
         value={organization}
         onChange={(e) => setOrganization(e.target.value)}
       />

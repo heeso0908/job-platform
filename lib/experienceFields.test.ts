@@ -1,5 +1,33 @@
 import { describe, it, expect } from 'vitest';
-import { FIELD_SCHEMAS, getFieldSchema, sanitizeFields } from './experienceFields';
+import { FIELD_SCHEMAS, getFieldSchema, getPlaceholders, sanitizeFields } from './experienceFields';
+
+describe('getPlaceholders', () => {
+  it('gives category-appropriate, non-personal example text for title and organization', () => {
+    expect(getPlaceholders('경력')).toEqual({ title: '회사명', organization: '부서명 (선택)' });
+    expect(getPlaceholders('자격증')).toEqual({ title: '자격증명', organization: '발급기관' });
+  });
+
+  it('falls back to a generic placeholder for a category without a specific one', () => {
+    expect(getPlaceholders('없는카테고리')).toEqual({ title: '제목', organization: '기관/장소 (선택)' });
+  });
+
+  it('defines a placeholder for every category', () => {
+    for (const c of ['학력', '경력', '프로젝트', '자격증', '어학', '수상', '학내외활동', '봉사', '교육', '스킬', '기타']) {
+      const p = getPlaceholders(c);
+      expect(p.title.length).toBeGreaterThan(0);
+      expect(p.organization.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('never mentions a specific real company, school, or certification name', () => {
+    const banned = /SK|실트론|SQLD|ADsP|콜마|전남대|엠트론/i;
+    for (const c of ['학력', '경력', '프로젝트', '자격증', '어학', '수상', '학내외활동', '봉사', '교육', '스킬', '기타']) {
+      const p = getPlaceholders(c);
+      expect(p.title).not.toMatch(banned);
+      expect(p.organization).not.toMatch(banned);
+    }
+  });
+});
 
 describe('getFieldSchema', () => {
   it('returns the defined fields for a known category', () => {
