@@ -37,10 +37,28 @@ describe('stages data layer', () => {
       application_id: 'app-1',
       stage_type: '서류',
       scheduled_at: '2026-10-01T00:00:00.000Z',
+      scheduled_end_at: null,
       status: '예정',
       notes: null,
       slack_reminder_days_before: 1,
     });
+  });
+
+  it('createStage accepts an optional end time for ranged stages like 인적성', async () => {
+    const created = { id: '2', stage_type: '인적성' };
+    let insertedWith: any = null;
+    const supabase = makeSupabaseStub({
+      insert: (payload: any) => {
+        insertedWith = payload;
+        return { select: () => ({ single: () => Promise.resolve({ data: created, error: null }) }) };
+      },
+    });
+    await createStage(supabase as any, 'app-1', {
+      stage_type: '인적성',
+      scheduled_at: '2026-10-01T00:00:00.000Z',
+      scheduled_end_at: '2026-10-01T02:00:00.000Z',
+    });
+    expect(insertedWith).toMatchObject({ scheduled_end_at: '2026-10-01T02:00:00.000Z' });
   });
 
   it('updateStage updates by id', async () => {

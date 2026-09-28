@@ -5,6 +5,7 @@ export interface DueReminder {
   stageId: string;
   stageType: string;
   scheduledAt: string;
+  scheduledEndAt: string | null;
   company: string;
   position: string;
   userId: string;
@@ -15,7 +16,7 @@ export function isReminderDue(scheduledAt: Date, daysBefore: number, today: Date
 }
 
 export async function findDueReminders(supabase: any, today: Date): Promise<DueReminder[]> {
-  const { data, error } = await supabase.from('application_stages').select('id, stage_type, scheduled_at, slack_reminder_days_before, applications(id, company, position, user_id)').eq('status', '예정');
+  const { data, error } = await supabase.from('application_stages').select('id, stage_type, scheduled_at, scheduled_end_at, slack_reminder_days_before, applications(id, company, position, user_id)').eq('status', '예정');
   if (error) throw new Error(error.message);
 
   return (data as any[])
@@ -24,6 +25,7 @@ export async function findDueReminders(supabase: any, today: Date): Promise<DueR
       stageId: row.id,
       stageType: row.stage_type,
       scheduledAt: row.scheduled_at,
+      scheduledEndAt: row.scheduled_end_at ?? null,
       company: row.applications.company,
       position: row.applications.position,
       userId: row.applications.user_id,

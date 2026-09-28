@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ApplicationStage } from '@/lib/db/stages';
-import { formatKstDateTime } from '@/lib/date';
+import { formatKstRange } from '@/lib/date';
 import DateTimePicker from '../../DateTimePicker';
 
 const STAGE_STATUSES = ['예정', '완료', '통과', '탈락'];
@@ -28,6 +28,7 @@ export default function StageCard({ stage }: { stage: ApplicationStage }) {
 
   const [stageType, setStageType] = useState(stage.stage_type);
   const [scheduledAt, setScheduledAt] = useState(toLocalInput(stage.scheduled_at));
+  const [scheduledEndAt, setScheduledEndAt] = useState(stage.scheduled_end_at ? toLocalInput(stage.scheduled_end_at) : '');
   const [daysBefore, setDaysBefore] = useState(stage.slack_reminder_days_before);
   const [notes, setNotes] = useState(stage.notes ?? '');
   const [saving, setSaving] = useState(false);
@@ -68,6 +69,7 @@ export default function StageCard({ stage }: { stage: ApplicationStage }) {
     const ok = await patch({
       stage_type: stageType,
       scheduled_at: new Date(scheduledAt).toISOString(),
+      scheduled_end_at: scheduledEndAt ? new Date(scheduledEndAt).toISOString() : null,
       slack_reminder_days_before: daysBefore,
       notes: notes || null,
     });
@@ -92,6 +94,11 @@ export default function StageCard({ stage }: { stage: ApplicationStage }) {
             required
           />
           <DateTimePicker value={scheduledAt} onChange={setScheduledAt} placeholder="일정 일시를 선택해주세요" required />
+          <DateTimePicker
+            value={scheduledEndAt}
+            onChange={setScheduledEndAt}
+            placeholder="종료 일시 (인적성처럼 시간 범위가 있는 경우, 선택)"
+          />
           <label className="flex items-center gap-3 text-sm text-ink-500">
             <input
               className="input !w-20 bg-white text-center"
@@ -133,7 +140,7 @@ export default function StageCard({ stage }: { stage: ApplicationStage }) {
         <div className="min-w-0">
           <p className="font-bold">{stage.stage_type}</p>
           <p className="text-sm text-ink-500">
-            {formatKstDateTime(new Date(stage.scheduled_at))}
+            {formatKstRange(new Date(stage.scheduled_at), stage.scheduled_end_at ? new Date(stage.scheduled_end_at) : null)}
             {' · '}
             {stage.slack_reminder_days_before}일 전 알림
           </p>

@@ -39,6 +39,7 @@ describe('findDueReminders', () => {
         id: 'stage-1',
         stage_type: '서류',
         scheduled_at: '2026-10-10T14:59:00.000Z',
+        scheduled_end_at: null,
         slack_reminder_days_before: 1,
         applications: { id: 'app-1', company: 'Acme', position: 'SWE', user_id: 'user-1' },
       },
@@ -46,6 +47,7 @@ describe('findDueReminders', () => {
         id: 'stage-2',
         stage_type: '면접',
         scheduled_at: '2026-11-01T15:00:00.000Z',
+        scheduled_end_at: null,
         slack_reminder_days_before: 1,
         applications: { id: 'app-2', company: 'Globex', position: 'PM', user_id: 'user-1' },
       },
@@ -64,10 +66,33 @@ describe('findDueReminders', () => {
         stageId: 'stage-1',
         stageType: '서류',
         scheduledAt: '2026-10-10T14:59:00.000Z',
+        scheduledEndAt: null,
         company: 'Acme',
         position: 'SWE',
         userId: 'user-1',
       },
     ]);
+  });
+
+  it('passes through a scheduled_end_at when the stage has one', async () => {
+    const rows = [
+      {
+        id: 'stage-1',
+        stage_type: '인적성',
+        scheduled_at: '2026-10-10T14:59:00.000Z',
+        scheduled_end_at: '2026-10-10T16:59:00.000Z',
+        slack_reminder_days_before: 1,
+        applications: { id: 'app-1', company: 'Acme', position: 'SWE', user_id: 'user-1' },
+      },
+    ];
+    const supabase = {
+      from: vi.fn(() => ({
+        select: () => ({
+          eq: () => Promise.resolve({ data: rows, error: null }),
+        }),
+      })),
+    };
+    const result = await findDueReminders(supabase as any, new Date('2026-10-09T02:00:00Z'));
+    expect(result[0].scheduledEndAt).toBe('2026-10-10T16:59:00.000Z');
   });
 });

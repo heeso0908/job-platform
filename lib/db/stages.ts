@@ -3,6 +3,7 @@ export interface ApplicationStage {
   application_id: string;
   stage_type: string;
   scheduled_at: string;
+  scheduled_end_at: string | null;
   status: string;
   notes: string | null;
   slack_reminder_days_before: number;
@@ -11,6 +12,7 @@ export interface ApplicationStage {
 export interface CreateStageInput {
   stage_type: string;
   scheduled_at: string;
+  scheduled_end_at?: string | null;
   status?: string;
   notes?: string | null;
   slack_reminder_days_before?: number;
@@ -19,6 +21,7 @@ export interface CreateStageInput {
 export type UpdateStageInput = Partial<{
   stage_type: string;
   scheduled_at: string;
+  scheduled_end_at: string | null;
   status: string;
   notes: string | null;
   slack_reminder_days_before: number;
@@ -45,6 +48,7 @@ export async function createStage(
       application_id: applicationId,
       stage_type: input.stage_type,
       scheduled_at: input.scheduled_at,
+      scheduled_end_at: input.scheduled_end_at ?? null,
       status: input.status ?? '예정',
       notes: input.notes ?? null,
       slack_reminder_days_before: input.slack_reminder_days_before ?? 1,

@@ -26,3 +26,11 @@ export function formatKstTime(date: Date): string {
 export function formatKstDateTime(date: Date): string {
   return `${formatKstDate(date)} ${formatKstTime(date)}`;
 }
+
+export function formatKstRange(start: Date, end: Date | null): string {
+  if (!end) return formatKstDateTime(start);
+  const sameDay = kstDayNumber(start) === kstDayNumber(end);
+  return sameDay
+    ? `${formatKstDate(start)} ${formatKstTime(start)} ~ ${formatKstTime(end)}`
+    : `${formatKstDateTime(start)} ~ ${formatKstDateTime(end)}`;
+}
