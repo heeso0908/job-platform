@@ -6,6 +6,7 @@ import { CATEGORIES } from '@/lib/experiences';
 import { getFieldSchema } from '@/lib/experienceFields';
 import TagInput from '../TagInput';
 import DatePicker from '../DatePicker';
+import Select from '../Select';
 
 export default function ExperienceForm({
   initial,
@@ -134,18 +135,11 @@ export default function ExperienceForm({
             <label key={def.key} className="space-y-1 text-xs font-semibold text-ink-500">
               {def.label}
               {def.type === 'select' ? (
-                <select
-                  className="input !py-2"
+                <Select
                   value={fields[def.key] ?? ''}
-                  onChange={(e) => setFields((f) => ({ ...f, [def.key]: e.target.value }))}
-                >
-                  <option value="">선택 안 함</option>
-                  {def.options!.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setFields((f) => ({ ...f, [def.key]: v }))}
+                  options={def.options!}
+                />
               ) : (
                 <input
                   className="input !py-2"
