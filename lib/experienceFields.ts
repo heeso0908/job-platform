@@ -70,6 +70,11 @@ export const FIELD_SCHEMAS: Record<string, FieldDef[]> = {
     { key: 'institution_type', label: '교육기관 구분', type: 'text' },
     { key: 'hours', label: '교육 시간', type: 'number' },
   ],
+  스킬: [
+    { key: 'skill_type', label: '구분', type: 'select', options: ['언어', '공학용', 'OA', '기타'] },
+    { key: 'level', label: '활용 수준', type: 'select', options: ['초급', '중급', '고급', '특급'] },
+    { key: 'years', label: '활용 기간', type: 'text' },
+  ],
 };
 
 export function getFieldSchema(category: string): FieldDef[] {
