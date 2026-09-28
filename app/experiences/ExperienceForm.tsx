@@ -134,7 +134,7 @@ export default function ExperienceForm({
       {getFieldSchema(category).length > 0 && (
         <div className="grid grid-cols-1 gap-2 rounded-2xl bg-white p-3 sm:grid-cols-2">
           {getFieldSchema(category).map((def) => (
-            <label key={def.key} className="space-y-1 text-xs font-semibold text-ink-500">
+            <label key={def.key} className="space-y-2 text-xs font-semibold text-ink-500">
               {def.label}
               {def.type === 'select' ? (
                 <Select
