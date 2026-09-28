@@ -9,6 +9,7 @@ import StageCard from './StageCard';
 export default function StageTimeline({ applicationId, stages }: { applicationId: string; stages: ApplicationStage[] }) {
   const [stageType, setStageType] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
+  const [scheduledEndAt, setScheduledEndAt] = useState('');
   const [daysBefore, setDaysBefore] = useState(1);
   const [notes, setNotes] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +24,7 @@ export default function StageTimeline({ applicationId, stages }: { applicationId
       body: JSON.stringify({
         stage_type: stageType,
         scheduled_at: new Date(scheduledAt).toISOString(),
+        scheduled_end_at: scheduledEndAt ? new Date(scheduledEndAt).toISOString() : null,
         slack_reminder_days_before: daysBefore,
         notes: notes || null,
       }),
@@ -33,6 +35,7 @@ export default function StageTimeline({ applicationId, stages }: { applicationId
     }
     setStageType('');
     setScheduledAt('');
+    setScheduledEndAt('');
     setDaysBefore(1);
     setNotes('');
     router.refresh();
@@ -64,6 +67,11 @@ export default function StageTimeline({ applicationId, stages }: { applicationId
           required
         />
         <DateTimePicker value={scheduledAt} onChange={setScheduledAt} placeholder="일정 일시를 선택해주세요" required />
+        <DateTimePicker
+          value={scheduledEndAt}
+          onChange={setScheduledEndAt}
+          placeholder="종료 일시 (인적성처럼 시간 범위가 있는 경우, 선택)"
+        />
         <label className="flex items-center gap-3 text-sm text-ink-500">
           <input
             className="input !w-20 text-center"

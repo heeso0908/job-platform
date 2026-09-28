@@ -1,5 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { daysUntilKst, formatKstDate, formatKstDateTime, formatKstTime, kstDayNumber } from './date';
+import { daysUntilKst, formatKstDate, formatKstDateTime, formatKstRange, formatKstTime, kstDayNumber } from './date';
+
+describe('formatKstRange', () => {
+  it('shows just the start when there is no end', () => {
+    expect(formatKstRange(new Date('2026-09-27T14:59:00Z'), null)).toBe('9월 27일 23:59');
+  });
+
+  it('shows a single date with a time range when start and end fall on the same KST day', () => {
+    expect(formatKstRange(new Date('2026-09-27T00:00:00Z'), new Date('2026-09-27T02:00:00Z'))).toBe('9월 27일 09:00 ~ 11:00');
+  });
+
+  it('shows both full dates when the range spans different KST days', () => {
+    expect(formatKstRange(new Date('2026-09-27T14:00:00Z'), new Date('2026-09-27T16:00:00Z'))).toBe(
+      '9월 27일 23:00 ~ 9월 28일 01:00'
+    );
+  });
+});
 
 describe('kstDayNumber', () => {
   it('rolls over to the next day at 15:00 UTC (midnight KST)', () => {

@@ -10,6 +10,7 @@ interface UpcomingItem {
   position: string;
   stageType: string;
   scheduledAt: string;
+  scheduledEndAt: string | null;
 }
 
 export default async function DashboardPage() {
@@ -27,6 +28,7 @@ export default async function DashboardPage() {
           position: app.position,
           stageType: stage.stage_type,
           scheduledAt: stage.scheduled_at,
+          scheduledEndAt: stage.scheduled_end_at,
         });
       }
     }
@@ -84,6 +86,7 @@ export default async function DashboardPage() {
                 {formatKstDate(new Date(item.scheduledAt))}
                 <br />
                 {formatKstTime(new Date(item.scheduledAt))}
+                {item.scheduledEndAt && ` ~ ${formatKstTime(new Date(item.scheduledEndAt))}`}
               </p>
             </Link>
           );
