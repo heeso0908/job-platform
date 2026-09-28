@@ -76,6 +76,31 @@ export function getFieldSchema(category: string): FieldDef[] {
   return FIELD_SCHEMAS[category] ?? [];
 }
 
+export interface Placeholders {
+  title: string;
+  organization: string;
+}
+
+const DEFAULT_PLACEHOLDERS: Placeholders = { title: '제목', organization: '기관/장소 (선택)' };
+
+const PLACEHOLDERS: Record<string, Placeholders> = {
+  학력: { title: '학교명', organization: '단과대학/학부 (선택)' },
+  경력: { title: '회사명', organization: '부서명 (선택)' },
+  프로젝트: { title: '프로젝트명', organization: '근무처/발주처 (선택)' },
+  자격증: { title: '자격증명', organization: '발급기관' },
+  어학: { title: '시험명', organization: '발급기관 (선택)' },
+  수상: { title: '상훈명', organization: '수여기관' },
+  학내외활동: { title: '활동명', organization: '기관 및 조직명' },
+  봉사: { title: '봉사활동명', organization: '주관기관' },
+  교육: { title: '교육명', organization: '교육기관명' },
+  스킬: { title: '스킬명', organization: '(선택)' },
+  기타: DEFAULT_PLACEHOLDERS,
+};
+
+export function getPlaceholders(category: string): Placeholders {
+  return PLACEHOLDERS[category] ?? DEFAULT_PLACEHOLDERS;
+}
+
 export function sanitizeFields(category: string, raw: Record<string, unknown>): Record<string, string> {
   const schema = getFieldSchema(category);
   const result: Record<string, string> = {};
