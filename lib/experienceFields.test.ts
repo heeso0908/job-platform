@@ -34,8 +34,11 @@ describe('getFieldSchema', () => {
     expect(getFieldSchema('경력').map((f) => f.key)).toEqual(['employment_type', 'employment_status', 'department', 'position']);
   });
 
-  it('returns an empty array for categories without extra fields (스킬, 기타)', () => {
-    expect(getFieldSchema('스킬')).toEqual([]);
+  it('returns skill-specific fields for 스킬', () => {
+    expect(getFieldSchema('스킬').map((f) => f.key)).toEqual(['skill_type', 'level', 'years']);
+  });
+
+  it('returns an empty array for categories without extra fields (기타)', () => {
     expect(getFieldSchema('기타')).toEqual([]);
   });
 
@@ -46,7 +49,7 @@ describe('getFieldSchema', () => {
 
 describe('FIELD_SCHEMAS coverage', () => {
   it('defines fields for every category that needs them', () => {
-    for (const c of ['학력', '경력', '프로젝트', '자격증', '어학', '수상', '학내외활동', '봉사', '교육']) {
+    for (const c of ['학력', '경력', '프로젝트', '자격증', '어학', '수상', '학내외활동', '봉사', '교육', '스킬']) {
       expect(FIELD_SCHEMAS[c]?.length).toBeGreaterThan(0);
     }
   });
@@ -76,5 +79,14 @@ describe('sanitizeFields', () => {
 
   it('returns an empty object for a category with no schema', () => {
     expect(sanitizeFields('기타', { anything: 'x' })).toEqual({});
+  });
+
+  it('sanitizes 스킬 fields, dropping a level outside the allowed options', () => {
+    expect(sanitizeFields('스킬', { skill_type: '언어', level: '중급', years: '1년' })).toEqual({
+      skill_type: '언어',
+      level: '중급',
+      years: '1년',
+    });
+    expect(sanitizeFields('스킬', { level: '엄청잘함' })).toEqual({});
   });
 });
