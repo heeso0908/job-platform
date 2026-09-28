@@ -1,46 +1,64 @@
 // lib/reminders.test.ts
 import { describe, it, expect, vi } from 'vitest';
-import { isReminderDue, findDueReminders } from './reminders';
+import { computeReminderAt, isReminderDue, findDueReminders } from './reminders';
 
-describe('isReminderDue (Korea time day boundaries)', () => {
-  const scheduled = new Date('2026-10-10T14:59:00Z'); // 10/10 23:59 KST
+describe('computeReminderAt', () => {
+  it('subtracts daysBefore whole days, preserving the time of day', () => {
+    const scheduled = new Date('2026-10-10T09:00:00Z');
+    expect(computeReminderAt(scheduled, 1)).toEqual(new Date('2026-10-09T09:00:00Z'));
+    expect(computeReminderAt(scheduled, 0)).toEqual(new Date('2026-10-10T09:00:00Z'));
+    expect(computeReminderAt(scheduled, 3)).toEqual(new Date('2026-10-07T09:00:00Z'));
+  });
+});
 
-  it('is true on the KST day that is daysBefore days before', () => {
-    expect(isReminderDue(scheduled, 1, new Date('2026-10-09T00:00:00Z'))).toBe(true); // 10/9 09:00 KST (cron time)
+describe('isReminderDue', () => {
+  const scheduledAt = new Date('2026-10-10T09:00:00Z'); // reminder-at (1일 전) = 2026-10-09T09:00:00Z
+
+  it('is not due before the reminder instant', () => {
+    expect(isReminderDue({ scheduledAt, daysBefore: 1, lastSentAt: null }, new Date('2026-10-09T08:59:59Z'))).toBe(false);
   });
 
-  it('is true even early KST morning, when the UTC date is still the previous day', () => {
-    expect(isReminderDue(scheduled, 1, new Date('2026-10-08T15:30:00Z'))).toBe(true); // 10/9 00:30 KST
+  it('becomes due exactly at the reminder instant and stays due afterwards (until sent)', () => {
+    expect(isReminderDue({ scheduledAt, daysBefore: 1, lastSentAt: null }, new Date('2026-10-09T09:00:00Z'))).toBe(true);
+    expect(isReminderDue({ scheduledAt, daysBefore: 1, lastSentAt: null }, new Date('2026-10-09T14:30:00Z'))).toBe(true);
   });
 
-  it('is false two days before when daysBefore is 1', () => {
-    expect(isReminderDue(scheduled, 1, new Date('2026-10-08T03:00:00Z'))).toBe(false); // 10/8 12:00 KST
+  it('is not due again once already sent for this reminder instant', () => {
+    expect(
+      isReminderDue(
+        { scheduledAt, daysBefore: 1, lastSentAt: new Date('2026-10-09T09:05:00Z') },
+        new Date('2026-10-09T14:00:00Z')
+      )
+    ).toBe(false);
   });
 
-  it('is true for daysBefore = 0 on the scheduled KST day', () => {
-    expect(isReminderDue(scheduled, 0, new Date('2026-10-10T00:00:00Z'))).toBe(true); // 10/10 09:00 KST
+  it('fires again if the stage was rescheduled later after a previous send', () => {
+    // lastSentAt predates the (new, later) reminder instant, so it's due again.
+    expect(
+      isReminderDue(
+        { scheduledAt: new Date('2026-10-12T09:00:00Z'), daysBefore: 1, lastSentAt: new Date('2026-10-09T09:05:00Z') },
+        new Date('2026-10-11T09:00:00Z')
+      )
+    ).toBe(true);
   });
 
-  it('is false after the reminder day has passed', () => {
-    expect(isReminderDue(scheduled, 1, new Date('2026-10-10T00:00:00Z'))).toBe(false);
-  });
-
-  it('uses the KST calendar date of the stage, not the UTC date', () => {
-    const justAfterMidnightKst = new Date('2026-10-10T15:30:00Z'); // 10/11 00:30 KST
-    expect(isReminderDue(justAfterMidnightKst, 1, new Date('2026-10-10T00:00:00Z'))).toBe(true); // 10/10 09:00 KST
-    expect(isReminderDue(justAfterMidnightKst, 1, new Date('2026-10-09T00:00:00Z'))).toBe(false);
+  it('is not due once the scheduled event itself is in the past', () => {
+    expect(
+      isReminderDue({ scheduledAt: new Date('2026-10-10T09:00:00Z'), daysBefore: 1, lastSentAt: null }, new Date('2026-10-10T09:00:01Z'))
+    ).toBe(false);
   });
 });
 
 describe('findDueReminders', () => {
-  it('filters stages to only those due today and maps them to DueReminder', async () => {
+  it('filters stages to only those due now and maps them to DueReminder', async () => {
     const rows = [
       {
         id: 'stage-1',
         stage_type: '서류',
-        scheduled_at: '2026-10-10T14:59:00.000Z',
+        scheduled_at: '2026-10-10T09:00:00.000Z',
         scheduled_end_at: null,
         slack_reminder_days_before: 1,
+        last_reminder_sent_at: null,
         applications: { id: 'app-1', company: 'Acme', position: 'SWE', user_id: 'user-1' },
       },
       {
@@ -49,6 +67,7 @@ describe('findDueReminders', () => {
         scheduled_at: '2026-11-01T15:00:00.000Z',
         scheduled_end_at: null,
         slack_reminder_days_before: 1,
+        last_reminder_sent_at: null,
         applications: { id: 'app-2', company: 'Globex', position: 'PM', user_id: 'user-1' },
       },
     ];
@@ -59,13 +78,13 @@ describe('findDueReminders', () => {
         }),
       })),
     };
-    const today = new Date('2026-10-09T02:00:00Z');
-    const result = await findDueReminders(supabase as any, today);
+    const now = new Date('2026-10-09T09:30:00.000Z');
+    const result = await findDueReminders(supabase as any, now);
     expect(result).toEqual([
       {
         stageId: 'stage-1',
         stageType: '서류',
-        scheduledAt: '2026-10-10T14:59:00.000Z',
+        scheduledAt: '2026-10-10T09:00:00.000Z',
         scheduledEndAt: null,
         company: 'Acme',
         position: 'SWE',
@@ -74,14 +93,15 @@ describe('findDueReminders', () => {
     ]);
   });
 
-  it('passes through a scheduled_end_at when the stage has one', async () => {
+  it('excludes a stage whose reminder was already sent', async () => {
     const rows = [
       {
         id: 'stage-1',
-        stage_type: '인적성',
-        scheduled_at: '2026-10-10T14:59:00.000Z',
-        scheduled_end_at: '2026-10-10T16:59:00.000Z',
+        stage_type: '서류',
+        scheduled_at: '2026-10-10T09:00:00.000Z',
+        scheduled_end_at: null,
         slack_reminder_days_before: 1,
+        last_reminder_sent_at: '2026-10-09T09:05:00.000Z',
         applications: { id: 'app-1', company: 'Acme', position: 'SWE', user_id: 'user-1' },
       },
     ];
@@ -92,7 +112,7 @@ describe('findDueReminders', () => {
         }),
       })),
     };
-    const result = await findDueReminders(supabase as any, new Date('2026-10-09T02:00:00Z'));
-    expect(result[0].scheduledEndAt).toBe('2026-10-10T16:59:00.000Z');
+    const result = await findDueReminders(supabase as any, new Date('2026-10-09T12:00:00.000Z'));
+    expect(result).toEqual([]);
   });
 });

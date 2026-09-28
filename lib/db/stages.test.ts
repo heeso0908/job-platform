@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { listStages, createStage, updateStage, deleteStage } from './stages';
+import { listStages, createStage, updateStage, deleteStage, markStageReminderSent } from './stages';
 
 function makeSupabaseStub(overrides: Record<string, any>) {
   return { from: vi.fn(() => overrides) };
@@ -75,5 +75,22 @@ describe('stages data layer', () => {
   it('deleteStage deletes by id', async () => {
     const supabase = makeSupabaseStub({ delete: () => ({ eq: () => Promise.resolve({ error: null }) }) });
     await expect(deleteStage(supabase as any, '1')).resolves.toBeUndefined();
+  });
+
+  it('markStageReminderSent sets last_reminder_sent_at by id', async () => {
+    let updatedWith: any = null;
+    const supabase = makeSupabaseStub({
+      update: (payload: any) => {
+        updatedWith = payload;
+        return { eq: () => Promise.resolve({ error: null }) };
+      },
+    });
+    await expect(markStageReminderSent(supabase as any, '1', '2026-10-09T09:05:00.000Z')).resolves.toBeUndefined();
+    expect(updatedWith).toEqual({ last_reminder_sent_at: '2026-10-09T09:05:00.000Z' });
+  });
+
+  it('markStageReminderSent throws on error', async () => {
+    const supabase = makeSupabaseStub({ update: () => ({ eq: () => Promise.resolve({ error: { message: 'boom' } }) }) });
+    await expect(markStageReminderSent(supabase as any, '1', '2026-10-09T09:05:00.000Z')).rejects.toThrow('boom');
   });
 });
