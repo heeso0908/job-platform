@@ -52,7 +52,7 @@ export default function Select({
       {open && (
         <ul
           role="listbox"
-          className="relative z-10 mt-2 max-h-60 w-full overflow-y-auto rounded-2xl bg-white p-1.5 shadow-xl ring-1 ring-ink-200"
+          className="absolute left-0 z-30 mt-2 max-h-60 w-full min-w-[8rem] overflow-y-auto rounded-2xl bg-white p-1.5 shadow-xl ring-1 ring-ink-200"
         >
           <li>
             <button
