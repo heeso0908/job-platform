@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { listApplications, createApplication } from '@/lib/db/applications';
+import { listApplications, createApplication, searchApplications } from '@/lib/db/applications';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = createServerSupabaseClient();
-  const apps = await listApplications(supabase);
+  const params = request.nextUrl.searchParams;
+  const q = params.get('q') ?? undefined;
+  const status = params.get('status') ?? undefined;
+
+  const apps = q || status ? await searchApplications(supabase, { q, status }) : await listApplications(supabase);
   return NextResponse.json(apps);
 }
 
