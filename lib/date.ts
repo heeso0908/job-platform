@@ -34,3 +34,14 @@ export function formatKstRange(start: Date, end: Date | null): string {
     ? `${formatKstDate(start)} ${formatKstTime(start)} ~ ${formatKstTime(end)}`
     : `${formatKstDateTime(start)} ~ ${formatKstDateTime(end)}`;
 }
+
+// 대시보드 카드처럼 날짜/시각을 두 줄로 나눠 보여주는 자리를 위한 버전.
+// 종료일이 시작일과 다른 날이면 두 줄 모두에 날짜를 포함해서, 종료 "시각"만
+// 남고 종료 날짜가 사라지는 일이 없게 한다.
+export function formatKstRangeLines(start: Date, end: Date | null): [string, string] {
+  if (!end) return [formatKstDate(start), formatKstTime(start)];
+  const sameDay = kstDayNumber(start) === kstDayNumber(end);
+  return sameDay
+    ? [formatKstDate(start), `${formatKstTime(start)} ~ ${formatKstTime(end)}`]
+    : [formatKstDateTime(start), `~ ${formatKstDateTime(end)}`];
+}

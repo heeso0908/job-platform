@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { listStages, createStage, updateStage, deleteStage, markStageReminderSent } from './stages';
+import { listStages, listUpcomingStagesForApplications, createStage, updateStage, deleteStage, markStageReminderSent } from './stages';
 
 function makeSupabaseStub(overrides: Record<string, any>) {
   return { from: vi.fn(() => overrides) };
@@ -17,6 +17,33 @@ describe('stages data layer', () => {
     });
     const result = await listStages(supabase as any, 'app-1');
     expect(result).toEqual(rows);
+  });
+
+  it('listUpcomingStagesForApplications fetches 예정 stages for many applications in one query', async () => {
+    const rows = [{ id: '1', application_id: 'app-1' }, { id: '2', application_id: 'app-2' }];
+    let inArgs: any = null;
+    const supabase = makeSupabaseStub({
+      select: () => ({
+        in: (...args: any[]) => {
+          inArgs = args;
+          return {
+            eq: () => ({
+              order: () => Promise.resolve({ data: rows, error: null }),
+            }),
+          };
+        },
+      }),
+    });
+    const result = await listUpcomingStagesForApplications(supabase as any, ['app-1', 'app-2']);
+    expect(result).toEqual(rows);
+    expect(inArgs).toEqual(['application_id', ['app-1', 'app-2']]);
+  });
+
+  it('listUpcomingStagesForApplications returns an empty list without querying when there are no application ids', async () => {
+    const supabase = makeSupabaseStub({});
+    const result = await listUpcomingStagesForApplications(supabase as any, []);
+    expect(result).toEqual([]);
+    expect(supabase.from).not.toHaveBeenCalled();
   });
 
   it('createStage inserts with defaults', async () => {
