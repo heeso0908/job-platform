@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { listApplications } from '@/lib/db/applications';
-import { listStages } from '@/lib/db/stages';
-import { daysUntilKst, formatKstDate, formatKstTime } from '@/lib/date';
+import { listUpcomingStagesForApplications } from '@/lib/db/stages';
+import { daysUntilKst, formatKstRangeLines } from '@/lib/date';
 
 interface UpcomingItem {
   applicationId: string;
@@ -17,22 +17,23 @@ export default async function DashboardPage() {
   const supabase = createServerSupabaseClient();
   const applications = await listApplications(supabase);
 
-  const upcoming: UpcomingItem[] = [];
-  for (const app of applications) {
-    const stages = await listStages(supabase, app.id);
-    for (const stage of stages) {
-      if (stage.status === '예정') {
-        upcoming.push({
-          applicationId: app.id,
-          company: app.company,
-          position: app.position,
-          stageType: stage.stage_type,
-          scheduledAt: stage.scheduled_at,
-          scheduledEndAt: stage.scheduled_end_at,
-        });
-      }
-    }
-  }
+  const applicationsById = new Map(applications.map((a) => [a.id, a]));
+  const stages = await listUpcomingStagesForApplications(supabase, applications.map((a) => a.id));
+
+  const upcoming: UpcomingItem[] = stages
+    .map((stage) => {
+      const app = applicationsById.get(stage.application_id);
+      if (!app) return null;
+      return {
+        applicationId: app.id,
+        company: app.company,
+        position: app.position,
+        stageType: stage.stage_type,
+        scheduledAt: stage.scheduled_at,
+        scheduledEndAt: stage.scheduled_end_at,
+      };
+    })
+    .filter((item): item is UpcomingItem => item !== null);
   upcoming.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
 
   const inProgress = applications.filter((a) => a.status === '진행중').length;
@@ -63,6 +64,10 @@ export default async function DashboardPage() {
       <section className="space-y-3">
         {upcoming.map((item) => {
           const days = daysUntilKst(new Date(item.scheduledAt));
+          const [line1, line2] = formatKstRangeLines(
+            new Date(item.scheduledAt),
+            item.scheduledEndAt ? new Date(item.scheduledEndAt) : null
+          );
           return (
             <Link
               key={`${item.applicationId}-${item.stageType}-${item.scheduledAt}`}
@@ -83,10 +88,9 @@ export default async function DashboardPage() {
                 <p className="truncate text-sm text-ink-500">{item.position}</p>
               </div>
               <p className="shrink-0 text-right text-sm text-ink-400">
-                {formatKstDate(new Date(item.scheduledAt))}
+                {line1}
                 <br />
-                {formatKstTime(new Date(item.scheduledAt))}
-                {item.scheduledEndAt && ` ~ ${formatKstTime(new Date(item.scheduledEndAt))}`}
+                {line2}
               </p>
             </Link>
           );

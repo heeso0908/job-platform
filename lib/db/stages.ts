@@ -37,6 +37,19 @@ export async function listStages(supabase: any, applicationId: string): Promise<
   return data;
 }
 
+// 대시보드가 공고마다 따로 조회하지 않고 한 번에 가져오도록 하는 배치 조회.
+export async function listUpcomingStagesForApplications(supabase: any, applicationIds: string[]): Promise<ApplicationStage[]> {
+  if (applicationIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('application_stages')
+    .select('*')
+    .in('application_id', applicationIds)
+    .eq('status', '예정')
+    .order('scheduled_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function createStage(
   supabase: any,
   applicationId: string,
