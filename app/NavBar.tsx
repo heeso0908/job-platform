@@ -9,6 +9,7 @@ const LINKS = [
   { href: '/applications', label: '지원 공고' },
   { href: '/essays', label: '자소서' },
   { href: '/experiences', label: '경험' },
+  { href: '/prompts', label: '프롬프트' },
   { href: '/settings', label: '설정' },
 ];
 
