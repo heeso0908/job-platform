@@ -36,3 +36,4 @@ Supabase SQL Editor에서 `supabase/migrations` 안의 파일을 번호 순서�
 - `0004_experience_category_fields.sql` — 경험 카테고리별 전용 필드 저장용 컬럼 추가
 - `0005_stage_end_time.sql` — 전형 일정의 선택적 종료 일시 컬럼 추가 (인적성처럼 시간 범위가 있는 경우)
 - `0006_reminder_sent_tracking.sql` — 알림 중복 발송 방지를 위한 마지막 발송 시각 컬럼 추가 (자주 도는 외부 크론 대응에 필요)
+- `0007_prompts.sql` — 자소서용 AI 프롬프트 라이브러리 테이블 (프롬프트 기능에 필요)
